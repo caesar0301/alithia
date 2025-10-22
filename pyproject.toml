@@ -36,7 +36,7 @@ dependencies = [
     "gitignore-parser>=0.1.11",
     "tiktoken>=0.8.0",
     "feedparser>=6.0.11",
-    "pinecone-client>=3.2.2",
+    "pinecone>=5.0.0",
     "supabase>=2.6.0",
 ]
 

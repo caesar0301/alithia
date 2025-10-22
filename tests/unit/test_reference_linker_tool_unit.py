@@ -1,8 +1,8 @@
 import numpy as np
 
 from alithia.core.embedding import EmbeddingService
-from alithia.core.tools.models import BibliographyEntry, ParagraphElement, Section, StructuredPaper
-from alithia.core.tools.reference_linker import ReferenceLinkerInput, ReferenceLinkerTool
+from alithia.core.models import BibliographyEntry, ParagraphElement, Section, StructuredPaper
+from alithia.core.reference_linker import ReferenceLinkerInput, ReferenceLinkerTool
 
 
 class DummyEmbeddingService(EmbeddingService):
@@ -30,7 +30,7 @@ class DummyEmbeddingService(EmbeddingService):
 
 
 def build_sample_paper():
-    from alithia.core.tools.models import Citation
+    from alithia.core.models import Citation
 
     para1 = ParagraphElement(element_id="p1", text="Discussed methods [1].", citations=[Citation(key="[1]")])
     para2 = ParagraphElement(element_id="p2", text="Background details and survey.", citations=[])

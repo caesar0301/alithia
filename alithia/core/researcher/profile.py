@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
 
-from .connected import (
+from .connection import (
     EmailConnection,
     GithubConnection,
     GoogleScholarConnection,

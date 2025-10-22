@@ -28,7 +28,7 @@ class TestArxivClientUnit:
         mock_paper.pdf_url = "http://example.com/paper.pdf"
         mock_paper.published = "2024-01-01"
 
-        with patch("alithia.core.arxiv_client.arxiv") as mock_arxiv:
+        with patch("alithia.agents.arxrec.arxiv_paper.arxiv") as mock_arxiv:
             # Mock the client and search
             mock_client = Mock()
             mock_search = Mock()
@@ -55,7 +55,7 @@ class TestArxivClientUnit:
         mock_feed = Mock()
         mock_feed.feed = {"title": "Feed error for query"}
 
-        with patch("alithia.core.arxiv_client.feedparser") as mock_feedparser:
+        with patch("alithia.agents.arxrec.arxiv_paper.feedparser") as mock_feedparser:
             mock_feedparser.parse.return_value = mock_feed
 
             # Should raise ValueError for invalid query
@@ -70,7 +70,7 @@ class TestArxivClientUnit:
         mock_feed.feed = {"title": "ArXiv Query Results"}
         mock_feed.entries = []
 
-        with patch("alithia.core.arxiv_client.feedparser") as mock_feedparser:
+        with patch("alithia.agents.arxrec.arxiv_paper.feedparser") as mock_feedparser:
             mock_feedparser.parse.return_value = mock_feed
 
             # Should return empty list
@@ -102,8 +102,8 @@ class TestArxivClientUnit:
         mock_paper.published = "2024-01-01"
 
         with (
-            patch("alithia.core.arxiv_client.feedparser") as mock_feedparser,
-            patch("alithia.core.arxiv_client.arxiv") as mock_arxiv,
+            patch("alithia.agents.arxrec.arxiv_paper.feedparser") as mock_feedparser,
+            patch("alithia.agents.arxrec.arxiv_paper.arxiv") as mock_arxiv,
         ):
             mock_feedparser.parse.return_value = mock_feed
 

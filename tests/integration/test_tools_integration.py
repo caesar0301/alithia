@@ -2,11 +2,11 @@ import types
 
 import pytest
 
-from alithia.core.tools.code_generator import CodeGeneratorInput, CodeGeneratorTool
-from alithia.core.tools.models import BibliographyEntry, ParagraphElement, Section, StructuredPaper
-from alithia.core.tools.pdf_parser import PDFParserInput, PDFParserTool
-from alithia.core.tools.reference_linker import ReferenceLinkerInput, ReferenceLinkerTool
-from alithia.core.tools.web_searcher import FindPaperInfoInput, WebSearcherTool
+from alithia.core.code_generator import CodeGeneratorInput, CodeGeneratorTool
+from alithia.core.models import BibliographyEntry, ParagraphElement, Section, StructuredPaper
+from alithia.core.pdf_parser import PDFParserInput, PDFParserTool
+from alithia.core.reference_linker import ReferenceLinkerInput, ReferenceLinkerTool
+from alithia.core.web_searcher import FindPaperInfoInput, WebSearcherTool
 
 
 @pytest.mark.integration
@@ -26,7 +26,7 @@ def test_pdf_parser_integration(monkeypatch):
 
 @pytest.mark.integration
 def test_web_searcher_integration(monkeypatch):
-    from alithia.core.tools import web_searcher as ws
+    from alithia.core import web_searcher as ws
 
     class DummyAuthor:
         def __init__(self, name):
@@ -73,7 +73,7 @@ def test_reference_linker_integration(monkeypatch):
 
 @pytest.mark.integration
 def test_code_generator_integration(monkeypatch):
-    from alithia.core.tools import code_generator as cg
+    from alithia.core import code_generator as cg
 
     class DummyLLM:
         def generate(self, messages):

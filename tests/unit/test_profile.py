@@ -1,6 +1,6 @@
 import pytest
 
-from alithia.core.researcher.connected import (
+from alithia.core.researcher.connection import (
     EmailConnection,
     GithubConnection,
     GoogleScholarConnection,

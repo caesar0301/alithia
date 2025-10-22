@@ -1,5 +1,5 @@
-from alithia.core.tools.code_generator import CodeGeneratorInput, CodeGeneratorTool
-from alithia.core.tools.models import ParagraphElement, Section, StructuredPaper
+from alithia.core.code_generator import CodeGeneratorInput, CodeGeneratorTool
+from alithia.core.models import ParagraphElement, Section, StructuredPaper
 
 
 class DummyLLM:
@@ -9,7 +9,7 @@ class DummyLLM:
 
 def test_code_generator_with_dummy_llm(monkeypatch):
     # Monkeypatch get_llm to return DummyLLM
-    monkeypatch.setattr("alithia.core.tools.code_generator.get_llm", lambda profile: DummyLLM())
+    monkeypatch.setattr("alithia.core.code_generator.get_llm", lambda profile: DummyLLM())
 
     paper = StructuredPaper(
         paper_id="p1",

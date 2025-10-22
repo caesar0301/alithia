@@ -1,6 +1,6 @@
 import types
 
-from alithia.core.tools.web_searcher import FindPaperInfoInput, WebSearcherTool
+from alithia.core.web_searcher import FindPaperInfoInput, WebSearcherTool
 
 
 class DummyAuthor:
@@ -36,9 +36,9 @@ def test_web_searcher_exact_match(monkeypatch):
         authors=["Alice", "Bob"],
     )
     # Monkeypatch arxiv.Client and arxiv.Search
-    monkeypatch.setattr("alithia.core.tools.web_searcher.arxiv.Client", lambda num_retries=5: DummyClient([dummy]))
+    monkeypatch.setattr("alithia.core.web_searcher.arxiv.Client", lambda num_retries=5: DummyClient([dummy]))
     monkeypatch.setattr(
-        "alithia.core.tools.web_searcher.arxiv.Search",
+        "alithia.core.web_searcher.arxiv.Search",
         lambda query, max_results=5: types.SimpleNamespace(query=query, max_results=max_results),
     )
 
@@ -50,9 +50,9 @@ def test_web_searcher_exact_match(monkeypatch):
 
 def test_web_searcher_no_match(monkeypatch):
     tool = WebSearcherTool()
-    monkeypatch.setattr("alithia.core.tools.web_searcher.arxiv.Client", lambda num_retries=5: DummyClient([]))
+    monkeypatch.setattr("alithia.core.web_searcher.arxiv.Client", lambda num_retries=5: DummyClient([]))
     monkeypatch.setattr(
-        "alithia.core.tools.web_searcher.arxiv.Search",
+        "alithia.core.web_searcher.arxiv.Search",
         lambda query, max_results=5: types.SimpleNamespace(query=query, max_results=max_results),
     )
 
