@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/your-project-name
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.12
+
+    - name: Install dependencies
+      run: uv sync --all-extras --dev
+
+    - name: Verify version and run checks
+      run: |
+        # Version verification
+        PROJECT_VERSION=$(grep '^version = ' pyproject.toml | cut -d'"' -f2)
+        RELEASE_TAG=${GITHUB_REF#refs/tags/}
+        if [[ "$RELEASE_TAG" == "v$PROJECT_VERSION"* ]] || [[ "$RELEASE_TAG" == "$PROJECT_VERSION"* ]]; then
+          echo "✅ Version match: RELEASE_TAG '$RELEASE_TAG' contains PROJECT_VERSION '$PROJECT_VERSION'"
+        else
+          echo "❌ Version mismatch: RELEASE_TAG '$RELEASE_TAG' should contain PROJECT_VERSION '$PROJECT_VERSION'"
+          exit 1
+        fi
+        # Run tests and quality checks
+        uv run make test-unit
+
+    - name: Build and verify package
+      run: |
+        uv run make build
+        ls -la dist/
+        if [ ! -f dist/*.whl ] || [ ! -f dist/*.tar.gz ]; then
+          echo "❌ Missing build artifacts"
+          exit 1
+        fi
+
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+        print-hash: true
