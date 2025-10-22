@@ -6,14 +6,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from flashrank import Ranker, RerankRequest
 
 from .arxiv_paper import ArxivPaper
 from .models import ScoredPaper
 
 
 def rerank_papers(
-    papers: List[ArxivPaper], corpus: List[Dict[str, Any]], model_name: str = "avsolatorio/GIST-small-Embedding-v0"
+    papers: List[ArxivPaper], corpus: List[Dict[str, Any]], model_name: str = "ms-marco-MiniLM-L-12-v2"
 ) -> List[ScoredPaper]:
     """
     Rerank papers based on relevance to user's research corpus.
@@ -21,7 +21,7 @@ def rerank_papers(
     Args:
         papers: List of papers to score
         corpus: User's Zotero corpus for comparison
-        model_name: Sentence transformer model to use
+        model_name: FlashRank model to use (default: ms-marco-MiniLM-L-12-v2)
 
     Returns:
         List of scored papers sorted by relevance
@@ -29,8 +29,8 @@ def rerank_papers(
     if not papers or not corpus:
         return [ScoredPaper(paper=paper, score=0.0) for paper in papers]
 
-    # Initialize sentence transformer
-    encoder = SentenceTransformer(model_name)
+    # Initialize FlashRank ranker
+    ranker = Ranker(model_name=model_name, cache_dir="/tmp/flashrank_cache")
 
     # Sort corpus by date (newest first)
     sorted_corpus = sorted(
@@ -41,27 +41,33 @@ def rerank_papers(
     time_decay_weight = 1 / (1 + np.log10(np.arange(len(sorted_corpus)) + 1))
     time_decay_weight = time_decay_weight / time_decay_weight.sum()
 
-    # Encode corpus abstracts
-    corpus_texts = [paper["data"]["abstractNote"] for paper in sorted_corpus]
-    corpus_embeddings = encoder.encode(corpus_texts)
+    # Prepare corpus abstracts as passages
+    corpus_passages = [{"text": paper["data"]["abstractNote"]} for paper in sorted_corpus]
 
-    # Encode paper summaries
-    paper_texts = [paper.summary for paper in papers]
-    paper_embeddings = encoder.encode(paper_texts)
-
-    # Calculate similarity scores
-    similarities = encoder.similarity(paper_embeddings, corpus_embeddings)
-
-    # Calculate weighted scores
-    scores = (similarities * time_decay_weight).sum(axis=1) * 10
-
-    # Create scored papers
+    # Score each paper against the entire corpus
     scored_papers = []
-    for paper, score in zip(papers, scores):
+    for paper in papers:
+        # Create rerank request for this paper against all corpus passages
+        rerank_request = RerankRequest(query=paper.summary, passages=corpus_passages)
+
+        # Get reranking results
+        results = ranker.rerank(rerank_request)
+
+        # Calculate weighted score based on corpus relevance and time decay
+        weighted_scores = []
+        for result in results:
+            idx = result["corpus_id"]
+            relevance_score = result["score"]
+            weighted_score = relevance_score * time_decay_weight[idx]
+            weighted_scores.append(weighted_score)
+
+        # Sum weighted scores and scale
+        final_score = sum(weighted_scores) * 10
+
         scored_paper = ScoredPaper(
             paper=paper,
-            score=float(score),
-            relevance_factors={"corpus_similarity": float(score), "corpus_size": len(corpus)},
+            score=float(final_score),
+            relevance_factors={"corpus_similarity": float(final_score), "corpus_size": len(corpus)},
         )
         scored_papers.append(scored_paper)
 
