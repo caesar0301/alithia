@@ -1,0 +1,46 @@
+{
+    "research_interests": ["AI", "Machine Learning", "Computer Vision"],
+    "expertise_level": "intermediate",
+    "language": "English",
+    "email": "your.email@example.com",
+    "llm": {
+        "openai_api_key": "your_openai_api_key",
+        "openai_api_base": "https://api.openai.com/v1",
+        "model_name": "gpt-4o"
+    },
+    "zotero": {
+        "zotero_id": "your_zotero_id",
+        "zotero_key": "your_zotero_key"
+    },
+    "email_notification": {
+        "smtp_server": "smtp.example.com",
+        "smtp_port": 587,
+        "sender": "your_email@example.com",
+        "sender_password": "your_password",
+        "receiver": "your_email@example.com"
+    },
+    "github": {
+        "github_username": "your_github_username",
+        "github_token": "your_github_token"
+    },
+    "google_scholar": {
+        "google_scholar_id": "your_google_scholar_id",
+        "google_scholar_token": "your_google_scholar_token"
+    },
+    "x": {
+        "x_username": "your_x_username",
+        "x_token": "your_x_token"
+    },
+    "gems": {
+        "Hunt topic": "your interests topics"
+    },
+    "arxrec": {
+        "query": "cs.AI+cs.CV+cs.LG+cs.CL",
+        "max_papers": 50,
+        "send_empty": false,
+        "ignore_patterns": []
+    },
+    "lens": {},
+    "vigil": {},
+    "debug": false
+}

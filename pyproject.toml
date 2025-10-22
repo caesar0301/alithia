@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pytemplate"
-version = "0.0.1"
-description = "Python app template"
+name = "alithia"
+version = "0.1.5"
+description = "Your ultimate research companion"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -14,7 +14,7 @@ authors = [
 maintainers = [
     {name = "Xiaming Chen", email = "chenxm35@gmail.com"}
 ]
-keywords = ["python", "template"]
+keywords = ["research assistant"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -25,9 +25,20 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.12.6"
+requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0.0",
+    "cogents-core>=0.1.13,<0.2.0",
+    "arxiv>=2.1.3",
+    "loguru>=0.7.2",
+    "pyzotero>=1.5.25",
+    "scikit-learn>=1.5.2",
+    "sentence-transformers>=3.3.1",
+    "gitignore-parser>=0.1.11",
+    "tiktoken>=0.8.0",
+    "feedparser>=6.0.11",
+    "pinecone-client>=3.2.2",
+    "supabase>=2.6.0",
 ]
 
 [project.optional-dependencies]
@@ -46,11 +57,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mirasurf/pytemplate"
+Homepage = "https://github.com/caesar0301/alithia"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pytemplate*"]
+include = ["alithia*"]
 
 [tool.black]
 line-length = 120
@@ -68,7 +79,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["pytemplate"]
+source = ["alithia"]
 
 [tool.coverage.report]
 exclude_lines = [

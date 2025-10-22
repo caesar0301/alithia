@@ -2,8 +2,8 @@
 PYTHON = python3
 UV = uv
 PYTEST = pytest
-PYTHON_MODULES = pytemplate tests examples
-COVERAGE_MODULES = pytemplate
+PYTHON_MODULES = alithia tests examples
+COVERAGE_MODULES = alithia
 TEST_DIR = tests
 LINE_LENGTH = 120
 
