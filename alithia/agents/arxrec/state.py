@@ -7,8 +7,10 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from alithia.core.paper import ArxivPaper, EmailContent, ScoredPaper
 from alithia.core.researcher import ResearcherProfile
+
+from .arxiv_paper import ArxivPaper
+from .models import EmailContent, ScoredPaper
 
 
 class ArxrecConfig(BaseModel):

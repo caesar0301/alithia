@@ -8,8 +8,8 @@ import logging
 import sys
 from typing import Any, Dict
 
-from alithia.agents.arxrec.arxrec_agent import ArxrecAgent
-from alithia.config.loader import load_config
+from alithia.agents.arxrec.agent import ArxrecAgent
+from alithia.core.config_loader import load_config
 from alithia.core.researcher.profile import ResearcherProfile
 
 from .state import ArxrecConfig

@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from alithia.core.arxiv_client import get_arxiv_papers
+from alithia.agents.arxrec.arxiv_paper import get_arxiv_papers
 
 
 class TestArxivClientUnit:

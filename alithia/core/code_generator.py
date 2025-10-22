@@ -5,8 +5,7 @@ from typing import Any, Dict, List, Optional
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel
 
-from alithia.core.llm_utils import get_llm
-from alithia.core.researcher.connected import (
+from alithia.core.researcher.connection import (
     EmailConnection,
     GithubConnection,
     GoogleScholarConnection,
@@ -15,6 +14,7 @@ from alithia.core.researcher.connected import (
     ZoteroConnection,
 )
 from alithia.core.researcher.profile import ResearcherProfile
+from alithia.utils.llm_utils import get_llm
 
 from .base import ToolInput, ToolOutput
 from .models import StructuredPaper

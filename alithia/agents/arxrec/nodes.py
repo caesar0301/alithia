@@ -5,14 +5,13 @@ Agent nodes for the research agent workflow.
 import logging
 from typing import List
 
-from alithia.core.arxiv_client import get_arxiv_papers
-from alithia.core.arxiv_paper_utils import extract_affiliations, generate_tldr, get_code_url
-from alithia.core.email_utils import construct_email_content, send_email
-from alithia.core.llm_utils import get_llm
-from alithia.core.paper import ScoredPaper
 from alithia.core.researcher import ResearcherProfile
-from alithia.core.zotero_client import filter_corpus, get_zotero_corpus
+from alithia.utils.llm_utils import get_llm
+from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
 
+from .arxiv_paper import get_arxiv_papers
+from .email_utils import construct_email_content, send_email
+from .models import ScoredPaper
 from .recommender import rerank_papers
 from .state import AgentState
 
@@ -178,18 +177,7 @@ def content_generation_node(state: AgentState) -> dict:
         for i, scored_paper in enumerate(state.scored_papers):
             paper = scored_paper.paper
             logger.info(f"Processing paper {i+1}/{len(state.scored_papers)}: {paper.title[:50]}...")
-
-            # Generate TLDR
-            if not paper.tldr:
-                paper.tldr = generate_tldr(paper, llm)
-
-            # Extract affiliations
-            if not paper.affiliations:
-                paper.affiliations = extract_affiliations(paper, llm)
-
-            # Get code URL
-            if not paper.code_url:
-                paper.code_url = get_code_url(paper)
+            paper.process(llm)
 
         # Construct email content
         email_content = construct_email_content(state.scored_papers)

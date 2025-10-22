@@ -1,4 +1,4 @@
-from .connected import (
+from .connection import (
     EmailConnection,
     GithubConnection,
     GoogleScholarConnection,
