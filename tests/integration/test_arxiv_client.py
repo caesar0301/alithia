@@ -6,7 +6,7 @@ These tests make real API calls to ArXiv and should be marked with the 'integrat
 
 import pytest
 
-from alithia.agents.arxrec.arxiv_paper import get_arxiv_papers
+from alithia.arxrec.arxiv_paper import get_arxiv_papers
 
 
 class TestArxivClientIntegration:

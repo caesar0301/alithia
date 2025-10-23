@@ -8,7 +8,7 @@ import logging
 import sys
 from typing import Any, Dict
 
-from alithia.agents.arxrec.agent import ArxrecAgent
+from alithia.arxrec.agent import ArxrecAgent
 from alithia.core.config_loader import load_config
 from alithia.core.researcher.profile import ResearcherProfile
 
@@ -25,10 +25,10 @@ def create_argument_parser() -> argparse.ArgumentParser:
         epilog="""
 Examples:
   # Run with environment variables
-  python -m alithia.agents.arxrec
+  python -m alithia.arxrec
   
   # Run with configuration file
-  python -m alithia.agents.arxrec --config config.json
+  python -m alithia.arxrec --config config.json
         """,
     )
     # Optional arguments

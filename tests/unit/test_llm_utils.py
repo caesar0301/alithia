@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from alithia.utils.llm_utils import get_llm
 from alithia.core.researcher.connection import (
     EmailConnection,
     GithubConnection,
@@ -12,6 +11,7 @@ from alithia.core.researcher.connection import (
     ZoteroConnection,
 )
 from alithia.core.researcher.profile import ResearcherProfile
+from alithia.utils.llm_utils import get_llm
 
 
 @pytest.mark.unit

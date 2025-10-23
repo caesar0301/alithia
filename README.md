@@ -91,7 +91,7 @@ See [alithia_config_example.json](alithia_config_example.json) for a complete ex
 
 ## License
 
-AGPL-3.0
+MIT
 
 ## Contributing
 

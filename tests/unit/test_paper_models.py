@@ -1,7 +1,7 @@
 import pytest
 
-from alithia.agents.arxrec.arxiv_paper import ArxivPaper
-from alithia.agents.arxrec.models import EmailContent, ScoredPaper
+from alithia.arxrec.arxiv_paper import ArxivPaper
+from alithia.arxrec.models import EmailContent, ScoredPaper
 
 
 @pytest.mark.unit
