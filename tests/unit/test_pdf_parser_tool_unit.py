@@ -1,5 +1,5 @@
-from alithia.core.tools.models import ParagraphElement
-from alithia.core.tools.pdf_parser import PDFParserInput, PDFParserTool
+from alithia.core.models import ParagraphElement
+from alithia.core.pdf_parser import PDFParserInput, PDFParserTool
 
 
 class DummyPDFProcessor:

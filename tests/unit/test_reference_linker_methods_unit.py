@@ -1,4 +1,4 @@
-from alithia.core.tools.reference_linker import ReferenceLinkerTool
+from alithia.core.reference_linker import ReferenceLinkerTool
 
 
 def test_extract_citation_keys_bracket_style():

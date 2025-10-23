@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from alithia.core.llm_utils import get_llm
-from alithia.core.researcher.connected import (
+from alithia.utils.llm_utils import get_llm
+from alithia.core.researcher.connection import (
     EmailConnection,
     GithubConnection,
     GoogleScholarConnection,
@@ -33,9 +33,10 @@ def test_get_llm_sets_env_and_model():
     )
 
     fake_client = MagicMock()
-    with patch("alithia.core.llm_utils.get_llm_client", return_value=fake_client) as mock_get:
-        get_llm(profile.llm)
+    fake_client.chat_model = "gpt-x"
+    with patch("cogents_core.llm.get_llm_client", return_value=fake_client) as mock_get:
+        result = get_llm(profile.llm)
 
-    assert fake_client.chat_model == "gpt-x"
+    assert result.chat_model == "gpt-x"
     # called with provider openai and chat_model
     mock_get.assert_called_with(provider="openai", api_key="secret", base_url="http://base", chat_model="gpt-x")

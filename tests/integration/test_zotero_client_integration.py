@@ -7,7 +7,7 @@ try:
 except Exception:  # pragma: no cover
     pyzotero = None
 
-from alithia.core.zotero_client import filter_corpus, get_zotero_corpus
+from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
 
 
 @pytest.mark.integration

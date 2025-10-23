@@ -1,4 +1,4 @@
-from alithia.core.tools.models import (
+from alithia.core.models import (
     AlgorithmElement,
     BibliographyEntry,
     PaperMetadata,

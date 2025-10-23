@@ -1,7 +1,8 @@
 import pytest
 
-from alithia.core.email_utils import create_empty_email_html, create_paper_html, get_stars_html
-from alithia.core.paper import ArxivPaper, ScoredPaper
+from alithia.agents.arxrec.email_utils import create_empty_email_html, create_paper_html, get_stars_html
+from alithia.agents.arxrec.arxiv_paper import ArxivPaper
+from alithia.agents.arxrec.models import ScoredPaper
 
 
 @pytest.mark.unit
