@@ -15,7 +15,7 @@ def test_extract_tex_content_no_arxiv_result_returns_none():
 def test_generate_tldr_uses_llm_and_truncates_prompt():
     p = ArxivPaper(title="t" * 1000, summary="s" * 5000, authors=["a"], arxiv_id="x", pdf_url="http://x")
     fake_llm = Mock()
-    fake_llm.chat_completion.return_value = "TLDR"
+    fake_llm.completion.return_value = "TLDR"
 
     with (patch("alithia.arxrec.arxiv_paper.tiktoken") as mock_tiktoken,):
         mock_enc = Mock()
@@ -25,7 +25,7 @@ def test_generate_tldr_uses_llm_and_truncates_prompt():
 
         res = p._generate_tldr(fake_llm)
         assert res == "TLDR"
-        fake_llm.chat_completion.assert_called()
+        fake_llm.completion.assert_called()
 
 
 @pytest.mark.unit
@@ -37,7 +37,7 @@ def test_extract_affiliations_parses_list():
         "all": r"""\\author{Alice \\and Bob} \\maketitle""",
     }
     fake_llm = Mock()
-    fake_llm.chat_completion.return_value = "['Inst A', 'Inst B']"
+    fake_llm.completion.return_value = "['Inst A', 'Inst B']"
 
     with (patch("alithia.arxrec.arxiv_paper.tiktoken") as mock_tiktoken,):
         mock_enc = Mock()

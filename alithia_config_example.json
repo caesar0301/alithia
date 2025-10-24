@@ -40,7 +40,5 @@
         "send_empty": false,
         "ignore_patterns": []
     },
-    "lens": {},
-    "vigil": {},
     "debug": false
 }

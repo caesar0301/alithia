@@ -2,8 +2,9 @@
 Agent nodes for the research agent workflow.
 """
 
-import logging
 from typing import List
+
+from cogents_core.utils import get_logger
 
 from alithia.core.researcher import ResearcherProfile
 from alithia.utils.llm_utils import get_llm
@@ -15,7 +16,7 @@ from .models import ScoredPaper
 from .recommender import rerank_papers
 from .state import AgentState
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _validate_user_profile(user_profile: ResearcherProfile) -> List[str]:
@@ -98,8 +99,18 @@ def data_collection_node(state: AgentState) -> dict:
         # Get ArXiv papers
         logger.info("Retrieving ArXiv papers...")
         papers = get_arxiv_papers(state.config.query, state.debug_mode)
-        logger.info(f"Retrieved {len(papers)} papers from ArXiv")
+        logger.info(f"Retrieved {len(papers)} valid papers from ArXiv")
 
+        # Log paper details for debugging
+        for i, paper in enumerate(papers):
+            logger.info(f"Paper {i+1}: {paper.title[:50]}... (ID: {paper.arxiv_id})")
+
+        # Validate that we have papers to work with
+        if not papers:
+            state.add_error("No valid papers retrieved from ArXiv")
+            return {"current_step": "data_collection_error"}
+
+        logger.info(f"Successfully collected {len(papers)} papers for processing")
         return {"discovered_papers": papers, "zotero_corpus": corpus, "current_step": "data_collection_complete"}
 
     except Exception as e:
@@ -177,7 +188,13 @@ def content_generation_node(state: AgentState) -> dict:
         for i, scored_paper in enumerate(state.scored_papers):
             paper = scored_paper.paper
             logger.info(f"Processing paper {i+1}/{len(state.scored_papers)}: {paper.title[:50]}...")
-            paper.process(llm)
+            try:
+                paper.process(llm)
+                logger.info(f"Successfully processed paper: {paper.title[:50]}...")
+            except Exception as e:
+                logger.warning(f"Failed to process paper {paper.title[:50]}: {str(e)}")
+                # Continue with other papers even if one fails
+                continue
 
         # Construct email content
         email_content = construct_email_content(state.scored_papers)
@@ -201,7 +218,7 @@ def communication_node(state: AgentState) -> dict:
         Dictionary with updated state fields
     """
     if state.debug_mode:
-        logger.info("Skipping email delivery in debug mode")
+        logger.info("Debug mode: Email delivery would be sent with recommendations")
         return {"current_step": "workflow_complete"}
 
     logger.info("Preparing email delivery...")

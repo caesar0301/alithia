@@ -1,4 +1,3 @@
-import logging
 import re
 import tarfile
 from contextlib import ExitStack
@@ -12,10 +11,11 @@ import feedparser
 import requests
 import tiktoken
 from cogents_core.llm import BaseLLMClient
+from cogents_core.utils import get_logger
 from pydantic import BaseModel, Field
 from requests.adapters import HTTPAdapter, Retry
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ArxivPaper(BaseModel):
@@ -41,9 +41,14 @@ class ArxivPaper(BaseModel):
         """Create ArxivPaper from arxiv.Result object."""
         arxiv_id = re.sub(r"v\d+$", "", paper_result.get_short_id())
 
+        # Validate that we have essential fields
+        if not paper_result.title or not paper_result.summary:
+            logger.warning(f"Skipping paper with missing title or summary: {arxiv_id}")
+            return None
+
         return cls(
-            title=paper_result.title,
-            summary=paper_result.summary,
+            title=paper_result.title.strip(),
+            summary=paper_result.summary.strip(),
             authors=[author.name for author in paper_result.authors],
             arxiv_id=arxiv_id,
             pdf_url=paper_result.pdf_url,
@@ -59,12 +64,26 @@ class ArxivPaper(BaseModel):
 
     def process(self, llm: BaseLLMClient) -> None:
         """Process the paper."""
-        if not self.tldr:
-            self.tldr = self._generate_tldr(llm)
-        if not self.affiliations:
-            self.affiliations = self._extract_affiliations(llm)
-        if not self.code_url:
-            self.code_url = self._get_code_url()
+        try:
+            if not self.tldr:
+                self.tldr = self._generate_tldr(llm)
+        except Exception as e:
+            logger.warning(f"Failed to generate TLDR for {self.arxiv_id}: {str(e)}")
+            self.tldr = "TLDR generation failed"
+
+        try:
+            if not self.affiliations:
+                self.affiliations = self._extract_affiliations(llm)
+        except Exception as e:
+            logger.warning(f"Failed to extract affiliations for {self.arxiv_id}: {str(e)}")
+            self.affiliations = []
+
+        try:
+            if not self.code_url:
+                self.code_url = self._get_code_url()
+        except Exception as e:
+            logger.warning(f"Failed to get code URL for {self.arxiv_id}: {str(e)}")
+            self.code_url = None
 
     def _extract_tex_content(self) -> Optional[Dict[str, str]]:
         """
@@ -231,7 +250,7 @@ class ArxivPaper(BaseModel):
         prompt_tokens = prompt_tokens[:4000]  # truncate to 4000 tokens
         prompt = enc.decode(prompt_tokens)
 
-        tldr = llm.chat_completion(
+        tldr = llm.completion(
             messages=[
                 {
                     "role": "system",
@@ -280,7 +299,7 @@ class ArxivPaper(BaseModel):
             prompt_tokens = enc.encode(prompt)
             prompt_tokens = prompt_tokens[:4000]  # truncate to 4000 tokens
             prompt = enc.decode(prompt_tokens)
-            affiliations = llm.chat_completion(
+            affiliations = llm.completion(
                 messages=[
                     {
                         "role": "system",
@@ -339,7 +358,7 @@ def get_arxiv_papers(arxiv_query: str, debug: bool = False) -> List[ArxivPaper]:
 
     Args:
         arxiv_query: ArXiv query string (e.g., "cs.AI+cs.CV")
-        debug: If True, return 5 recent papers regardless of date
+        debug: If True, limit to 5 papers but still use the actual query
 
     Returns:
         List of ArxivPaper objects
@@ -347,9 +366,22 @@ def get_arxiv_papers(arxiv_query: str, debug: bool = False) -> List[ArxivPaper]:
     client = arxiv.Client(num_retries=10, delay_seconds=10)
 
     if debug:
-        # Return 5 recent papers for debugging
-        search = arxiv.Search(query="cat:cs.AI", sort_by=arxiv.SortCriterion.SubmittedDate, max_results=5)
-        papers = [ArxivPaper.from_arxiv_result(p) for p in client.results(search)]
+        # In debug mode, use the actual query but limit to 5 papers
+        # Convert the query format for ArXiv API
+        query_parts = arxiv_query.split("+")
+        if len(query_parts) > 1:
+            # For multiple categories, use OR logic
+            formatted_query = " OR ".join([f"cat:{part}" for part in query_parts])
+        else:
+            formatted_query = f"cat:{arxiv_query}"
+
+        logger.info(f"Debug mode: Using query '{formatted_query}'")
+        search = arxiv.Search(query=formatted_query, sort_by=arxiv.SortCriterion.SubmittedDate, max_results=5)
+        papers = []
+        for p in client.results(search):
+            paper = ArxivPaper.from_arxiv_result(p)
+            if paper is not None:
+                papers.append(paper)
         return papers
 
     # Fetch papers from RSS feed

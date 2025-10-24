@@ -52,43 +52,7 @@ The Arxrec Agent delivers daily paper recommendations from arXiv to your inbox.
 
 ### 2. Configuration
 
-Create a JSON configuration with your credentials:
-
-```json
-{
-  "zotero_id": "YOUR_ZOTERO_USER_ID",
-  "zotero_key": "YOUR_ZOTERO_API_KEY",
-  "openai_api_key": "YOUR_OPENAI_API_KEY",
-  "openai_api_base": "https://api.openai.com/v1",
-  "model_name": "gpt-5",
-  "smtp_server": "smtp.gmail.com",
-  "smtp_port": 587,
-  "sender": "your-email@gmail.com",
-  "sender_password": "YOUR_APP_PASSWORD",
-  "receiver": "recipient@example.com",
-  "max_paper_num": 10,
-  "arxiv_query": "cs.AI+cs.CV"
-}
-```
-
-See [alithia_config_example.json](alithia_config_example.json) for a complete example.
-
-**Configuration Fields:**
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `zotero_id` | ✅ | Your Zotero user ID |
-| `zotero_key` | ✅ | Your Zotero API key |
-| `openai_api_key` | ✅ | OpenAI API key for summaries |
-| `smtp_server` | ✅ | Email SMTP server |
-| `smtp_port` | ✅ | SMTP port (587 for Gmail) |
-| `sender` | ✅ | Sender email address |
-| `sender_password` | ✅ | Email app password |
-| `receiver` | ✅ | Recipient email address |
-| `openai_api_base` | ❌ | Custom API base URL |
-| `max_paper_num` | ❌ | Max papers per email (default: 10) |
-| `arxiv_query` | ❌ | ArXiv categories (e.g., "cs.AI+cs.CV") |
-| `debug` | ❌ | Enable debug mode |
+Create a JSON configuration with your credentials. See [alithia_config_example.json](alithia_config_example.json) for a complete example.
 
 ## License
 
