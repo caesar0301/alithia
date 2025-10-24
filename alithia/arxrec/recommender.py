@@ -53,11 +53,15 @@ def rerank_papers(
         # Get reranking results
         results = ranker.rerank(rerank_request)
 
+        # Create a mapping from text to corpus index
+        text_to_idx = {paper["data"]["abstractNote"]: idx for idx, paper in enumerate(sorted_corpus)}
+
         # Calculate weighted score based on corpus relevance and time decay
         weighted_scores = []
         for result in results:
-            idx = result["corpus_id"]
             relevance_score = result["score"]
+            # Find which corpus paper this result corresponds to
+            idx = text_to_idx[result["text"]]
             weighted_score = relevance_score * time_decay_weight[idx]
             weighted_scores.append(weighted_score)
 

@@ -60,6 +60,7 @@ Create a JSON configuration with your credentials:
   "zotero_key": "YOUR_ZOTERO_API_KEY",
   "openai_api_key": "YOUR_OPENAI_API_KEY",
   "openai_api_base": "https://api.openai.com/v1",
+  "model_name": "gpt-5",
   "smtp_server": "smtp.gmail.com",
   "smtp_port": 587,
   "sender": "your-email@gmail.com",

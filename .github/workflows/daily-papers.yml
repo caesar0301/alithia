@@ -1,0 +1,67 @@
+name: Daily Papers
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  # Ensure workflow runs even with repository inactivity
+  FORCE_RUN: true
+
+jobs:
+  run-arxrec-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip wheel
+        pip install -U alithia==0.1.4
+
+    - name: Run ArXiv Research Agent
+      env:
+        ALITHIA_CONFIG_JSON: ${{ secrets.ALITHIA_CONFIG_JSON }}
+      run: |
+        if [ -z "$ALITHIA_CONFIG_JSON" ]; then
+          echo "❌ Error: ALITHIA_CONFIG_JSON secret is not set"
+          exit 1
+        fi
+        echo "$ALITHIA_CONFIG_JSON" > arxrec_config.json
+        python -m alithia.agents.arxrec --config arxrec_config.json
+        rm -rf arxrec_config.json
+
+    - name: Upload logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: arxrec-logs-${{ github.run_id }}
+        path: |
+          *.log
+        retention-days: 3
+
+    - name: Workflow Completion Status
+      if: always()
+      run: |
+        echo "🏁 Workflow completed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Status: SUCCESS"
+        else
+          echo "❌ Status: FAILED"
+        fi
+        echo "📊 Run ID: ${{ github.run_id }}"
+        echo "🔗 Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

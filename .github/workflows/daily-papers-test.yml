@@ -1,0 +1,41 @@
+name: Daily Papers (Debug)
+
+on:
+  workflow_dispatch:  # Manual trigger only for testing
+
+jobs:
+  test-arxrec-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip wheel
+        pip install -U alithia==0.1.4
+
+    - name: Run ArXiv Research Agent (Debug Mode)
+      env:
+        ALITHIA_CONFIG_JSON: ${{ secrets.ALITHIA_CONFIG_JSON }}
+      run: |
+        echo "$ALITHIA_CONFIG_JSON" > arxrec_config_test.json
+        # Modify config to enable debug mode
+        python -c "
+        import json
+        with open('arxrec_config_test.json', 'r') as f:
+            config = json.load(f)
+        config['debug'] = True
+        config['max_paper_num'] = 3  # Limit papers for testing
+        with open('arxrec_config_test.json', 'w') as f:
+            json.dump(config, f, indent=2)
+        "
+        python -m alithia.agents.arxrec --config arxrec_config_test.json
+        rm -rf arxrec_config_test.json

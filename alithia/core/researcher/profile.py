@@ -3,7 +3,7 @@ User profile and configuration models for the Alithia research agent.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -32,9 +32,9 @@ class ResearcherProfile(BaseModel):
     llm: LLMConnection
     zotero: ZoteroConnection
     email_notification: EmailConnection
-    github: GithubConnection
-    google_scholar: GoogleScholarConnection
-    x: XConnection
+    github: Optional[GithubConnection] = None
+    google_scholar: Optional[GoogleScholarConnection] = None
+    x: Optional[XConnection] = None
 
     # Gems
     gems: Dict[str, Any] = Field(default_factory=dict)
@@ -46,6 +46,17 @@ class ResearcherProfile(BaseModel):
         if not _validate(config):
             raise ValueError("Invalid configuration")
 
+        # Helper function to safely create optional connections
+        def safe_create_connection(connection_class, config_key):
+            config_data = config.get(connection_class.__name__.lower(), {})
+            if config_data:
+                try:
+                    return connection_class(**config_data)
+                except Exception:
+                    logger.warning(f"Failed to create {connection_class.__name__}, skipping")
+                    return None
+            return None
+
         return cls(
             research_interests=config.get("research_interests", []),
             expertise_level=config.get("expertise_level", "intermediate"),
@@ -54,9 +65,11 @@ class ResearcherProfile(BaseModel):
             llm=LLMConnection(**config.get("llm", {})),
             zotero=ZoteroConnection(**config.get("zotero", {})),
             email_notification=EmailConnection(**config.get("email_notification", {})),
-            github=GithubConnection(**config.get("github", {})),
-            google_scholar=GoogleScholarConnection(**config.get("google_scholar", {})),
-            x=XConnection(**config.get("x", {})),
+            github=GithubConnection(**config.get("github", {})) if config.get("github") else None,
+            google_scholar=(
+                GoogleScholarConnection(**config.get("google_scholar", {})) if config.get("google_scholar") else None
+            ),
+            x=XConnection(**config.get("x", {})) if config.get("x") else None,
             gems=config.get("gems", {}),
         )
 
