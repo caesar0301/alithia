@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip wheel
-        pip install -U alithia==0.1.4
+        pip install -U alithia==0.2.0
 
     - name: Run ArXiv Research Agent (Debug Mode)
       env:
