@@ -9,7 +9,7 @@ from alithia.core.researcher.connection import LLMConnection
 logger = logging.getLogger(__name__)
 
 
-def get_llm(conn: LLMConnection):
+def get_llm_client(conn: LLMConnection):
     """
     Get LLM instance based on LLMConnection configuration.
 

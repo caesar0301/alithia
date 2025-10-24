@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alithia"
-version = "0.2.1"
+version = "0.2.2"
 description = "Your ultimate research companion"
 readme = "README.md"
 license = "MIT"
@@ -32,13 +32,17 @@ dependencies = [
     "loguru>=0.7.2",
     "pyzotero>=1.5.25",
     "scikit-learn>=1.5.2",
-    "flashrank>=0.2.8",
     "gitignore-parser>=0.1.11",
     "tiktoken>=0.8.0",
     "feedparser>=6.0.11",
+    "flashrank>=0.2.8",
 ]
 
 [project.optional-dependencies]
+extra = [
+    "sentence-transformers",
+]
+
 dev = [
     "pytest>=8.2,<9",
     "pytest-cov>=4.0.0",
@@ -90,4 +94,4 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
-] 
+]

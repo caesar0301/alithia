@@ -7,13 +7,13 @@ from typing import List
 from cogents_core.utils import get_logger
 
 from alithia.core.researcher import ResearcherProfile
-from alithia.utils.llm_utils import get_llm
+from alithia.utils.llm_utils import get_llm_client
 from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
 
 from .arxiv_paper import get_arxiv_papers
 from .email_utils import construct_email_content, send_email
 from .models import ScoredPaper
-from .recommender import rerank_papers
+from .reranker import PaperReranker
 from .state import AgentState
 
 logger = get_logger(__name__)
@@ -142,12 +142,12 @@ def relevance_assessment_node(state: AgentState) -> dict:
         ]
     else:
         try:
-            scored_papers = rerank_papers(state.discovered_papers, state.zotero_corpus)
+            preranker = PaperReranker(state.discovered_papers, state.zotero_corpus)
+            scored_papers = preranker.rerank_sentence_transformer()
             logger.info(f"Scored {len(scored_papers)} papers")
         except Exception as e:
             state.add_error(f"Relevance assessment failed: {str(e)}")
             # Fallback to basic scoring
-
             scored_papers = [
                 ScoredPaper(paper=paper, score=5.0, relevance_factors={"fallback": 5.0})
                 for paper in state.discovered_papers
@@ -182,7 +182,7 @@ def content_generation_node(state: AgentState) -> dict:
         return {"current_step": "content_generation_error"}
 
     try:
-        llm = get_llm(state.config.user_profile.llm)
+        llm = get_llm_client(state.config.user_profile.llm)
 
         # Generate TLDR and enrich paper data
         for i, scored_paper in enumerate(state.scored_papers):

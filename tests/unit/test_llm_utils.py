@@ -11,7 +11,7 @@ from alithia.core.researcher.connection import (
     ZoteroConnection,
 )
 from alithia.core.researcher.profile import ResearcherProfile
-from alithia.utils.llm_utils import get_llm
+from alithia.utils.llm_utils import get_llm_client
 
 
 @pytest.mark.unit
@@ -35,7 +35,7 @@ def test_get_llm_sets_env_and_model():
     fake_client = MagicMock()
     fake_client.chat_model = "gpt-x"
     with patch("cogents_core.llm.get_llm_client", return_value=fake_client) as mock_get:
-        result = get_llm(profile.llm)
+        result = get_llm_client(profile.llm)
 
     assert result.chat_model == "gpt-x"
     # called with provider openai and chat_model
