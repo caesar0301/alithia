@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip wheel
-        pip install -U sentence-transformers alithia
+        pip install -U alithia[arxrec,extra]
 
     - name: Run ArXiv Research Agent (Debug Mode)
       env:

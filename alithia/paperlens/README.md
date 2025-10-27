@@ -1,11 +1,75 @@
 # paperlens
 
-## arch
+A powerful research paper discovery tool that uses semantic similarity to find the most relevant papers for your research topic.
 
-1. pdf -> chunked text -> (title, abstract, author/affilication, content, reference)
-2. report of single paper
-   1. background
-   2. core ideas and contributions
+## Features
+
+- 📄 **PDF Parsing**: Uses docling library to extract structured content from academic PDFs
+- 🧠 **Semantic Matching**: Leverages sentence-transformers for intelligent similarity scoring
+- 📊 **Structured Data Model**: Comprehensive data model for paper metadata and content
+- 🔍 **Smart Ranking**: Ranks papers by relevance to your research topic
+- ⚡ **Batch Processing**: Efficiently processes directories of papers
+
+## Installation
+
+Install paperlens with its dependencies:
+
+```bash
+pip install 'alithia[paperlens,extra]'
+```
+
+## Usage
+
+### Basic Usage
+
+1. Create a text file with your research topic (paragraph or snippet)
+2. Place your PDF papers in a directory
+3. Run paperlens:
+
+```bash
+python -m alithia.paperlens -i research_topic.txt -d ./papers
+```
+
+### Command Line Options
+
+```
+-i, --input FILE          Input file containing research topic (required)
+-d, --directory DIR       Directory containing PDF papers (required)
+-n, --top-n N            Number of top papers to display (default: 10)
+--model MODEL            Sentence transformer model to use (default: all-MiniLM-L6-v2)
+--no-recursive           Don't search subdirectories for PDFs
+-v, --verbose            Enable verbose logging
+```
+
+### Examples
+
+Find top 10 papers:
+```bash
+python -m alithia.paperlens -i topic.txt -d ./papers
+```
+
+Find top 20 papers with verbose output:
+```bash
+python -m alithia.paperlens -i topic.txt -d ./papers -n 20 -v
+```
+
+Use a more powerful model:
+```bash
+python -m alithia.paperlens -i topic.txt -d ./papers --model all-mpnet-base-v2
+```
+
+## Architecture
+
+### Paper Reference Seeking
+
+Given a paragraph or snippet of research topic, and a collection of PDF papers,
+scan and find most related papers related to given research topic.
+
+Components:
+- PDF parsing with docling
+- Topic extraction and semantic matching with sentence-transformers
+- Text similarity calculation using cosine similarity
+- Structured data models for papers
 
 ---
 

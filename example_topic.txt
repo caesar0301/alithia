@@ -1,0 +1,2 @@
+Deep learning approaches for natural language understanding and generation, with focus on transformer architectures, attention mechanisms, and large language models. Particularly interested in methods for improving model interpretability, reducing computational costs, and enhancing few-shot learning capabilities.
+
