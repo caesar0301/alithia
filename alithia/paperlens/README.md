@@ -27,7 +27,7 @@ pip install 'alithia[paperlens,extra]'
 3. Run paperlens:
 
 ```bash
-python -m alithia.paperlens -i research_topic.txt -d ./papers
+python -m alithia.paperlens -i example_topic.txt -d ./papers
 ```
 
 ### Command Line Options

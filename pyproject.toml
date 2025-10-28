@@ -28,6 +28,8 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
     "cogents-core>=0.1.13,<0.2.0",
+    "docling>=2.58.0",
+    "sentence-transformers",
 ]
 
 [project.optional-dependencies]
@@ -42,10 +44,6 @@ arxrec = [
 ]
 paperlens = [
     "docling>=2.58.0",
-]
-extra = [
-    "flashrank>=0.2.8",
-    "sentence-transformers",
 ]
 dev = [
     "pytest>=8.2,<9",
