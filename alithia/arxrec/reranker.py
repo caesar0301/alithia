@@ -7,8 +7,7 @@ from typing import Any, Dict, List
 
 import numpy as np
 
-from .arxiv_paper import ArxivPaper
-from .models import ScoredPaper
+from .models import ArxivPaper, ScoredPaper
 
 
 class PaperReranker:

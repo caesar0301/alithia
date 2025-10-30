@@ -9,8 +9,7 @@ from pydantic import BaseModel, Field
 
 from alithia.core.researcher import ResearcherProfile
 
-from .arxiv_paper import ArxivPaper
-from .models import EmailContent, ScoredPaper
+from .models import ArxivPaper, EmailContent, ScoredPaper
 
 
 class ArxrecConfig(BaseModel):
