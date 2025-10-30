@@ -10,7 +10,7 @@ from alithia.core.researcher import ResearcherProfile
 from alithia.utils.llm_utils import get_llm_client
 from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
 
-from .arxiv_paper import get_arxiv_papers
+from .arxiv_paper_utils import extract_affiliations, generate_tldr, get_arxiv_papers, get_code_url
 from .email_utils import construct_email_content, send_email
 from .models import ScoredPaper
 from .reranker import PaperReranker
@@ -141,17 +141,9 @@ def relevance_assessment_node(state: AgentState) -> dict:
             ScoredPaper(paper=paper, score=5.0, relevance_factors={"basic": 5.0}) for paper in state.discovered_papers
         ]
     else:
-        try:
-            preranker = PaperReranker(state.discovered_papers, state.zotero_corpus)
-            scored_papers = preranker.rerank_sentence_transformer()
-            logger.info(f"Scored {len(scored_papers)} papers")
-        except Exception as e:
-            state.add_error(f"Relevance assessment failed: {str(e)}")
-            # Fallback to basic scoring
-            scored_papers = [
-                ScoredPaper(paper=paper, score=5.0, relevance_factors={"fallback": 5.0})
-                for paper in state.discovered_papers
-            ]
+        preranker = PaperReranker(state.discovered_papers, state.zotero_corpus)
+        scored_papers = preranker.rerank_sentence_transformer()
+        logger.info(f"Scored {len(scored_papers)} papers")
 
     # Apply paper limit
     if state.config and state.config.max_papers > 0:
@@ -188,13 +180,18 @@ def content_generation_node(state: AgentState) -> dict:
         for i, scored_paper in enumerate(state.scored_papers):
             paper = scored_paper.paper
             logger.info(f"Processing paper {i+1}/{len(state.scored_papers)}: {paper.title[:50]}...")
-            try:
-                paper.process(llm)
-                logger.info(f"Successfully processed paper: {paper.title[:50]}...")
-            except Exception as e:
-                logger.warning(f"Failed to process paper {paper.title[:50]}: {str(e)}")
-                # Continue with other papers even if one fails
-                continue
+
+            # Generate TLDR
+            if not paper.tldr:
+                paper.tldr = generate_tldr(paper, llm)
+
+            # Extract affiliations
+            if not paper.affiliations:
+                paper.affiliations = extract_affiliations(paper, llm)
+
+            # Get code URL
+            if not paper.code_url:
+                paper.code_url = get_code_url(paper)
 
         # Construct email content
         email_content = construct_email_content(state.scored_papers)
