@@ -53,13 +53,13 @@ def profile_analysis_node(state: AgentState) -> dict:
 
     if not state.config.user_profile:
         state.add_error("No profile provided")
-        return {"current_step": "profile_analysis_error"}
+        return {"current_step": "profile_analysis_error", "error_log": state.error_log}
 
     errors = _validate_user_profile(state.config.user_profile)
     if errors:
         for error in errors:
             state.add_error(error)
-        return {"current_step": "profile_validation_error"}
+        return {"current_step": "profile_validation_error", "error_log": state.error_log}
 
     logger.info(f"Profile validated for user: {state.config.user_profile.email}")
     return {"current_step": "profile_analysis_complete"}
@@ -79,7 +79,7 @@ def data_collection_node(state: AgentState) -> dict:
 
     if not state.config.user_profile:
         state.add_error("No profile available for data collection")
-        return {"current_step": "data_collection_error"}
+        return {"current_step": "data_collection_error", "error_log": state.error_log}
 
     try:
         # Get Zotero corpus
@@ -108,14 +108,14 @@ def data_collection_node(state: AgentState) -> dict:
         # Validate that we have papers to work with
         if not papers:
             state.add_error("No valid papers retrieved from ArXiv")
-            return {"current_step": "data_collection_error"}
+            return {"current_step": "data_collection_error", "error_log": state.error_log}
 
         logger.info(f"Successfully collected {len(papers)} papers for processing")
         return {"discovered_papers": papers, "zotero_corpus": corpus, "current_step": "data_collection_complete"}
 
     except Exception as e:
         state.add_error(f"Data collection failed: {str(e)}")
-        return {"current_step": "data_collection_error"}
+        return {"current_step": "data_collection_error", "error_log": state.error_log}
 
 
 def relevance_assessment_node(state: AgentState) -> dict:
@@ -136,14 +136,26 @@ def relevance_assessment_node(state: AgentState) -> dict:
 
     if not state.zotero_corpus:
         logger.warning("No Zotero corpus available, using basic scoring")
-
         scored_papers = [
             ScoredPaper(paper=paper, score=5.0, relevance_factors={"basic": 5.0}) for paper in state.discovered_papers
         ]
     else:
-        preranker = PaperReranker(state.discovered_papers, state.zotero_corpus)
-        scored_papers = preranker.rerank_sentence_transformer()
-        logger.info(f"Scored {len(scored_papers)} papers")
+        try:
+            preranker = PaperReranker(state.discovered_papers, state.zotero_corpus)
+            scored_papers = preranker.rerank_sentence_transformer()
+            logger.info(f"Scored {len(scored_papers)} papers")
+        except Exception as e:
+            state.add_error(f"Relevance assessment failed: {str(e)}")
+            # Fallback to basic scoring
+            scored_papers = [
+                ScoredPaper(paper=paper, score=5.0, relevance_factors={"fallback": 5.0})
+                for paper in state.discovered_papers
+            ]
+            return {
+                "scored_papers": scored_papers,
+                "current_step": "relevance_assessment_complete",
+                "error_log": state.error_log,
+            }
 
     # Apply paper limit
     if state.config and state.config.max_papers > 0:
@@ -171,7 +183,7 @@ def content_generation_node(state: AgentState) -> dict:
 
     if not state.config.user_profile:
         state.add_error("No profile available for content generation")
-        return {"current_step": "content_generation_error"}
+        return {"current_step": "content_generation_error", "error_log": state.error_log}
 
     try:
         llm = get_llm_client(state.config.user_profile.llm)
@@ -201,7 +213,7 @@ def content_generation_node(state: AgentState) -> dict:
 
     except Exception as e:
         state.add_error(f"Content generation failed: {str(e)}")
-        return {"current_step": "content_generation_error"}
+        return {"current_step": "content_generation_error", "error_log": state.error_log}
 
 
 def communication_node(state: AgentState) -> dict:
@@ -222,7 +234,7 @@ def communication_node(state: AgentState) -> dict:
 
     if not state.config.user_profile:
         state.add_error("No profile available for email delivery")
-        return {"current_step": "communication_error"}
+        return {"current_step": "communication_error", "error_log": state.error_log}
 
     # Check if we should send empty email
     if not state.email_content or (hasattr(state.email_content, "is_empty") and state.email_content.is_empty()):
@@ -252,9 +264,9 @@ def communication_node(state: AgentState) -> dict:
             return {"current_step": "workflow_complete"}
         else:
             state.add_error("Email delivery failed")
-            return {"current_step": "communication_error"}
+            return {"current_step": "communication_error", "error_log": state.error_log}
 
     except Exception as e:
         logger.error(f"Email delivery failed: {str(e)}")
         state.add_error(f"Email delivery failed: {str(e)}")
-        return {"current_step": "communication_error"}
+        return {"current_step": "communication_error", "error_log": state.error_log}
