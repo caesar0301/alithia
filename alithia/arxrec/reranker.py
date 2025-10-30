@@ -125,7 +125,7 @@ class PaperReranker:
 
         # Create scored papers
         scored_papers = []
-        for paper, score in zip(self.__dir__papers, scores):
+        for paper, score in zip(self.papers, scores):
             scored_paper = ScoredPaper(
                 paper=paper,
                 score=float(score),
