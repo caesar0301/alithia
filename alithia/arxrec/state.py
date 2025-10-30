@@ -3,7 +3,8 @@ Agent state management for the Alithia research agent.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from operator import add
+from typing import Annotated, Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -27,6 +28,11 @@ class ArxrecConfig(BaseModel):
     debug: bool = False
 
 
+def merge_dicts(left: Dict[str, Any], right: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge two dictionaries, with right overriding left."""
+    return {**left, **right}
+
+
 class AgentState(BaseModel):
     """Centralized state for the research agent workflow."""
 
@@ -45,8 +51,10 @@ class AgentState(BaseModel):
 
     # System State
     current_step: str = "initializing"
-    error_log: List[str] = Field(default_factory=list)
-    performance_metrics: Dict[str, float] = Field(default_factory=dict)
+    # Use Annotated with operator.add to accumulate error_log entries across nodes
+    error_log: Annotated[List[str], add] = Field(default_factory=list)
+    # Use custom merge function to accumulate performance_metrics across nodes
+    performance_metrics: Annotated[Dict[str, float], merge_dicts] = Field(default_factory=dict)
 
     # Debug State
     debug_mode: bool = False

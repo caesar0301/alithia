@@ -39,8 +39,8 @@ dependencies = [
 
 [project.optional-dependencies]
 extra = [
-    "flashrank>=0.2.8",
     "sentence-transformers",
+    "numpy<2",
 ]
 
 dev = [
