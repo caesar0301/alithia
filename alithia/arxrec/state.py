@@ -8,7 +8,7 @@ from typing import Annotated, Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from alithia.core.researcher import ResearcherProfile
+from alithia.researcher import ResearcherProfile
 
 from .models import ArxivPaper, EmailContent, ScoredPaper
 

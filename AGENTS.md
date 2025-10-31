@@ -133,7 +133,7 @@ The project uses a JSON configuration system. Key configuration areas:
 
 ### Configuration Loading
 
-Use `alithia.core.config_loader.load_config()` to load configuration from:
+Use `alithia.config_loader.load_config()` to load configuration from:
 1. Environment variables
 2. Configuration file (JSON)
 3. Default values

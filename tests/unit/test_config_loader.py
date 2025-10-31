@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 
-from alithia.core.config_loader import (
+from alithia.config_loader import (
     _build_config_from_envs,
     _load_config_from_file,
     _merge_configs,

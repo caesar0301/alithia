@@ -6,7 +6,7 @@ from typing import List
 
 from cogents_core.utils import get_logger
 
-from alithia.core.researcher import ResearcherProfile
+from alithia.researcher import ResearcherProfile
 from alithia.utils.llm_utils import get_llm_client
 from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
 

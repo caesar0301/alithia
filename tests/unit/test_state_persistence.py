@@ -3,7 +3,7 @@
 import pytest
 
 from alithia.arxrec.state import AgentState, ArxrecConfig
-from alithia.core.researcher import (
+from alithia.researcher import (
     EmailConnection,
     LLMConnection,
     ResearcherProfile,

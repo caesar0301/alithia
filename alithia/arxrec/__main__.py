@@ -9,8 +9,8 @@ import sys
 from typing import Any, Dict
 
 from alithia.arxrec.agent import ArxrecAgent
-from alithia.core.config_loader import load_config
-from alithia.core.researcher.profile import ResearcherProfile
+from alithia.config_loader import load_config
+from alithia.researcher.profile import ResearcherProfile
 
 from .state import ArxrecConfig
 

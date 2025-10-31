@@ -1,6 +1,6 @@
 import pytest
 
-from alithia.core.researcher.connection import (
+from alithia.researcher.connection import (
     EmailConnection,
     GithubConnection,
     GoogleScholarConnection,
@@ -8,7 +8,7 @@ from alithia.core.researcher.connection import (
     XConnection,
     ZoteroConnection,
 )
-from alithia.core.researcher.profile import ResearcherProfile
+from alithia.researcher.profile import ResearcherProfile
 
 
 @pytest.mark.unit
