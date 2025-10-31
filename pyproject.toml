@@ -28,12 +28,8 @@ requires-python = ">=3.11"
 
 dependencies = [
     "cogents-core>=0.1.13,<0.2.0",
-    "sentence-transformers>=3.0.0",
-]
-
-[project.optional-dependencies]
-# Research agent module
-arxrec = [
+    # Exclude on macOS Intel (requires torch wheels not available there)
+    "sentence-transformers>=3.0.0; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\" or sys_platform == \"win32\"",
     "arxiv>=2.1.3",
     "loguru>=0.7.2",
     "pyzotero>=1.5.25",
@@ -41,16 +37,19 @@ arxrec = [
     "gitignore-parser>=0.1.11",
     "tiktoken>=0.8.0",
     "feedparser>=6.0.11",
+    # Docling requires modern PyTorch for VLM; exclude on macOS Intel
+    "docling>=2.58.0; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
+    # PyTorch on Apple Silicon (arm64), Linux
+    "torch==2.4.1; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
+    "torchvision==0.19.1; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
+    "torchaudio==2.4.1; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
+    # PyTorch on macOS Intel (x86_64): exclude for Python >=3.11 (no wheels)
+    "torch==1.13.1; sys_platform == \"darwin\" and platform_machine == \"x86_64\" and python_version < '3.11'",
+    "torchvision==0.14.1; sys_platform == \"darwin\" and platform_machine == \"x86_64\" and python_version < '3.11'",
+    "torchaudio==0.13.1; sys_platform == \"darwin\" and platform_machine == \"x86_64\" and python_version < '3.11'",
 ]
 
-# PDF / document understanding component
-paperlens = [
-    "docling>=2.58.0",
-    # Default CPU build (universal fallback)
-    "torch==2.4.1",
-    "torchvision==0.19.1",
-    "torchaudio==2.4.1",
-]
+[project.optional-dependencies]
 
 # Development environment
 dev = [
@@ -107,3 +106,4 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+

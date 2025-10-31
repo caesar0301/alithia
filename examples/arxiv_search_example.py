@@ -84,4 +84,3 @@ if __name__ == "__main__":
     # example_debug_mode()
     example_build_query()
     # example_single_category()
-

@@ -34,7 +34,7 @@ def get_env(key: str, default=None):
 def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Load configuration from JSON file or environment variables.
-    
+
     By default, looks for 'alithia_config.json' in the current working directory.
     """
     if config_path and not os.path.exists(config_path):
