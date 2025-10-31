@@ -34,6 +34,8 @@ def get_env(key: str, default=None):
 def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Load configuration from JSON file or environment variables.
+    
+    By default, looks for 'alithia_config.json' in the current working directory.
     """
     if config_path and not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -41,7 +43,8 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     # Build configuration
     env_config = _build_config_from_envs()
 
-    config_file = config_path or os.path.join(os.path.dirname(__file__), "alithia_config.json")
+    # Use config_path if provided, otherwise look in current working directory
+    config_file = config_path or "alithia_config.json"
     if os.path.exists(config_file):
         file_dict = _load_config_from_file(config_file)
         # merge file config and env config with env config taking precedence

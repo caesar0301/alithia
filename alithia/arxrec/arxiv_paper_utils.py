@@ -22,7 +22,115 @@ from .models import ArxivPaper
 logger = logging.getLogger(__name__)
 
 
-def get_arxiv_papers(arxiv_query: str, debug: bool = False) -> List[ArxivPaper]:
+def _build_category_query(arxiv_query: str) -> str:
+    """
+    Build category query string from arxiv_query format.
+
+    Args:
+        arxiv_query: ArXiv query string with categories separated by '+' (e.g., "cs.AI+cs.CV+cs.LG")
+
+    Returns:
+        Formatted category query string for ArXiv API
+
+    Example:
+        >>> query = _build_category_query("cs.AI+cs.CV")
+        >>> # Returns: "cat:cs.AI OR cat:cs.CV"
+    """
+    categories = arxiv_query.split("+")
+    category_parts = [f"cat:{cat.strip()}" for cat in categories]
+
+    # For single category, return without parentheses
+    if len(category_parts) == 1:
+        return category_parts[0]
+
+    # For multiple categories, use OR logic
+    return " OR ".join(category_parts)
+
+
+def build_arxiv_search_query(arxiv_query: str, from_time: str, to_time: str) -> str:
+    """
+    Build ArXiv API search query string with categories and date range.
+
+    Args:
+        arxiv_query: ArXiv query string with categories separated by '+' (e.g., "cs.AI+cs.CV+cs.LG")
+        from_time: Start time in format YYYYMMDDHHMM (e.g., "202510250000")
+        to_time: End time in format YYYYMMDDHHMM (e.g., "202510252359")
+
+    Returns:
+        Formatted query string for ArXiv API
+
+    Example:
+        >>> query = build_arxiv_search_query("cs.AI+cs.CV", "202510250000", "202510252359")
+        >>> # Returns: "(cat:cs.AI OR cat:cs.CV) AND submittedDate:[202510250000 TO 202510252359]"
+    """
+    # Build category query using the helper function
+    category_query = _build_category_query(arxiv_query)
+
+    # Build date range query part: submittedDate:[from_time TO to_time]
+    date_query = f"submittedDate:[{from_time} TO {to_time}]"
+
+    # Combine with parentheses: (categories) AND date_range
+    return f"({category_query}) AND {date_query}"
+
+
+def get_arxiv_papers_search(
+    arxiv_query: str,
+    from_time: str,
+    to_time: str,
+    max_results: int = 200,
+    debug: bool = False,
+) -> List[ArxivPaper]:
+    """
+    Search ArXiv papers by categories and submission date range.
+
+    Args:
+        arxiv_query: ArXiv query string with categories separated by '+' (e.g., "cs.AI+cs.CV+cs.LG+cs.CL")
+        from_time: Start time in format YYYYMMDDHHMM (e.g., "202510250000")
+        to_time: End time in format YYYYMMDDHHMM (e.g., "202510252359")
+        max_results: Maximum number of results to return (default: 200)
+        debug: If True, limit to 5 papers for debugging
+
+    Returns:
+        List of ArxivPaper objects matching the search criteria
+
+    Example:
+        >>> papers = get_arxiv_papers_search(
+        ...     arxiv_query="cs.AI+cs.CV+cs.LG+cs.CL",
+        ...     from_time="202510250000",
+        ...     to_time="202510252359",
+        ...     max_results=200
+        ... )
+    """
+    # Build the search query using the utility function
+    full_query = build_arxiv_search_query(arxiv_query, from_time, to_time)
+
+    if debug:
+        logger.info(f"Debug mode: Using query '{full_query}' with max_results=5")
+        max_results = 5
+
+    logger.info(f"Searching ArXiv with query: {full_query}")
+
+    # Create search with proper sorting
+    client = arxiv.Client(num_retries=10, delay_seconds=10)
+    search = arxiv.Search(
+        query=full_query,
+        sort_by=arxiv.SortCriterion.SubmittedDate,
+        sort_order=arxiv.SortOrder.Ascending,
+        max_results=max_results,
+    )
+
+    # Fetch and convert results
+    papers = []
+    for result in client.results(search):
+        paper = ArxivPaper.from_arxiv_result(result)
+        if paper is not None:
+            papers.append(paper)
+
+    logger.info(f"Found {len(papers)} papers matching search criteria")
+    return papers
+
+
+def get_arxiv_papers_feed(arxiv_query: str, debug: bool = False) -> List[ArxivPaper]:
     """
     Retrieve papers from ArXiv based on query.
 
@@ -37,14 +145,7 @@ def get_arxiv_papers(arxiv_query: str, debug: bool = False) -> List[ArxivPaper]:
 
     if debug:
         # In debug mode, use the actual query but limit to 5 papers
-        # Convert the query format for ArXiv API
-        query_parts = arxiv_query.split("+")
-        if len(query_parts) > 1:
-            # For multiple categories, use OR logic
-            formatted_query = " OR ".join([f"cat:{part}" for part in query_parts])
-        else:
-            formatted_query = f"cat:{arxiv_query}"
-
+        formatted_query = _build_category_query(arxiv_query)
         logger.info(f"Debug mode: Using query '{formatted_query}'")
         search = arxiv.Search(query=formatted_query, sort_by=arxiv.SortCriterion.SubmittedDate, max_results=5)
         papers = []

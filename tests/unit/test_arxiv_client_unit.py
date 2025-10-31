@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from alithia.arxrec.arxiv_paper_utils import get_arxiv_papers
+from alithia.arxrec.arxiv_paper_utils import get_arxiv_papers_feed
 
 
 class TestArxivClientUnit:
@@ -38,7 +38,7 @@ class TestArxivClientUnit:
             mock_client.results.return_value = [mock_paper]
 
             # Call the function
-            papers = get_arxiv_papers("cs.AI", debug=True)
+            papers = get_arxiv_papers_feed("cs.AI", debug=True)
 
             # Verify the results
             assert len(papers) == 1
@@ -60,7 +60,7 @@ class TestArxivClientUnit:
 
             # Should raise ValueError for invalid query
             with pytest.raises(ValueError, match="Invalid ARXIV_QUERY"):
-                get_arxiv_papers("invalid_query")
+                get_arxiv_papers_feed("invalid_query")
 
     @pytest.mark.unit
     def test_get_arxiv_papers_empty_feed_mocked(self):
@@ -74,7 +74,7 @@ class TestArxivClientUnit:
             mock_feedparser.parse.return_value = mock_feed
 
             # Should return empty list
-            papers = get_arxiv_papers("cs.AI")
+            papers = get_arxiv_papers_feed("cs.AI")
             assert papers == []
 
     @pytest.mark.unit
@@ -115,7 +115,7 @@ class TestArxivClientUnit:
             mock_client.results.return_value = [mock_paper]
 
             # Call the function
-            papers = get_arxiv_papers("cs.AI")
+            papers = get_arxiv_papers_feed("cs.AI")
 
             # Verify the results
             assert len(papers) == 1

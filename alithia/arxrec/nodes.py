@@ -10,7 +10,7 @@ from alithia.core.researcher import ResearcherProfile
 from alithia.utils.llm_utils import get_llm_client
 from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
 
-from .arxiv_paper_utils import extract_affiliations, generate_tldr, get_arxiv_papers, get_code_url
+from .arxiv_paper_utils import extract_affiliations, generate_tldr, get_arxiv_papers_feed, get_code_url
 from .email_utils import construct_email_content, send_email
 from .models import ScoredPaper
 from .reranker import PaperReranker
@@ -98,7 +98,7 @@ def data_collection_node(state: AgentState) -> dict:
 
         # Get ArXiv papers
         logger.info("Retrieving ArXiv papers...")
-        papers = get_arxiv_papers(state.config.query, state.debug_mode)
+        papers = get_arxiv_papers_feed(state.config.query, state.debug_mode)
         logger.info(f"Retrieved {len(papers)} valid papers from ArXiv")
 
         # Log paper details for debugging
