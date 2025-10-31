@@ -5,7 +5,7 @@ This example demonstrates how to search arXiv papers with specific categories
 and date ranges, similar to using the arXiv API query endpoint.
 """
 
-from alithia.arxrec.arxiv_paper_utils import build_arxiv_search_query, get_arxiv_papers_search
+from alithia.utils.arxiv_paper_utils import build_arxiv_search_query, get_arxiv_papers_search
 
 
 def example_basic_search():

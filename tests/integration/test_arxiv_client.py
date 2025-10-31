@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from alithia.arxrec.arxiv_paper_utils import get_arxiv_papers_feed, get_arxiv_papers_search
+from alithia.utils.arxiv_paper_utils import get_arxiv_papers_feed, get_arxiv_papers_search
 
 
 class TestArxivClientIntegration:

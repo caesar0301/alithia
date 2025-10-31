@@ -2,14 +2,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from alithia.arxrec.arxiv_paper_utils import (
+from alithia.models import ArxivPaper
+from alithia.utils.arxiv_paper_utils import (
     _build_category_query,
     build_arxiv_search_query,
     extract_affiliations,
     extract_tex_content,
     generate_tldr,
 )
-from alithia.arxrec.models import ArxivPaper
 
 
 @pytest.mark.unit
@@ -24,7 +24,7 @@ def test_generate_tldr_uses_llm_and_truncates_prompt():
     fake_llm = Mock()
     fake_llm.completion.return_value = "TLDR"
 
-    with (patch("alithia.arxrec.arxiv_paper_utils.tiktoken") as mock_tiktoken,):
+    with (patch("alithia.utils.arxiv_paper_utils.tiktoken") as mock_tiktoken,):
         mock_enc = Mock()
         mock_enc.encode.side_effect = lambda s: list(range(min(len(s), 8000)))
         mock_enc.decode.side_effect = lambda toks: "x" * len(toks)
@@ -46,7 +46,7 @@ def test_extract_affiliations_parses_list():
     fake_llm = Mock()
     fake_llm.completion.return_value = "['Inst A', 'Inst B']"
 
-    with (patch("alithia.arxrec.arxiv_paper_utils.tiktoken") as mock_tiktoken,):
+    with (patch("alithia.utils.arxiv_paper_utils.tiktoken") as mock_tiktoken,):
         mock_enc = Mock()
         mock_enc.encode.side_effect = lambda s: list(range(min(len(s), 8000)))
         mock_enc.decode.side_effect = lambda toks: "x" * len(toks)

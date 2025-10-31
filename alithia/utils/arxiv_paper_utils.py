@@ -17,7 +17,7 @@ import tiktoken
 from cogents_core.llm import BaseLLMClient
 from requests.adapters import HTTPAdapter, Retry
 
-from .models import ArxivPaper
+from alithia.models import ArxivPaper
 
 logger = logging.getLogger(__name__)
 

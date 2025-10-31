@@ -7,10 +7,10 @@ from typing import List
 from cogents_core.utils import get_logger
 
 from alithia.researcher import ResearcherProfile
+from alithia.utils.arxiv_paper_utils import extract_affiliations, generate_tldr, get_arxiv_papers_feed, get_code_url
 from alithia.utils.llm_utils import get_llm_client
 from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
 
-from .arxiv_paper_utils import extract_affiliations, generate_tldr, get_arxiv_papers_feed, get_code_url
 from .email_utils import construct_email_content, send_email
 from .models import ScoredPaper
 from .reranker import PaperReranker
