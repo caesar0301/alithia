@@ -27,7 +27,7 @@ pip install 'alithia[paperlens,extra]'
 3. Run paperlens:
 
 ```bash
-python -m alithia.paperlens -i example_topic.txt -d ./papers
+python -m alithia.run paperlens_agent -i example_topic.txt -d ./papers
 ```
 
 ### Command Line Options
@@ -45,17 +45,17 @@ python -m alithia.paperlens -i example_topic.txt -d ./papers
 
 Find top 10 papers:
 ```bash
-python -m alithia.paperlens -i topic.txt -d ./papers
+python -m alithia.run paperlens_agent -i topic.txt -d ./papers
 ```
 
 Find top 20 papers with verbose output:
 ```bash
-python -m alithia.paperlens -i topic.txt -d ./papers -n 20 -v
+python -m alithia.run paperlens_agent -i topic.txt -d ./papers -n 20 -v
 ```
 
 Use a more powerful model:
 ```bash
-python -m alithia.paperlens -i topic.txt -d ./papers --model all-mpnet-base-v2
+python -m alithia.run paperlens_agent -i topic.txt -d ./papers --model all-mpnet-base-v2
 ```
 
 ## Architecture

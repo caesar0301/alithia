@@ -46,8 +46,9 @@ alithia/
 │   └── researcher/          # Researcher profile management
 │       ├── connection.py    # Database connections
 │       └── profile.py       # Researcher profile models
+├── run/                    # Main entrypoint
+│   └── __main__.py         # CLI: python -m alithia.run
 ├── arxrec/                  # AlithiaArxrec agent ✅ IMPLEMENTED
-│   ├── __main__.py         # CLI: python -m alithia.arxrec
 │   ├── agent.py            # Main agent logic
 │   ├── arxiv_paper.py      # ArXiv paper data models
 │   ├── email_utils.py      # Email functionality
@@ -56,7 +57,6 @@ alithia/
 │   ├── reranker.py         # Paper ranking algorithms
 │   └── state.py            # Agent state management
 ├── paperlens/              # AlithiaLens agent ✅ IMPLEMENTED
-│   ├── __main__.py         # CLI: python -m alithia.paperlens
 │   ├── engine.py           # Core PDF processing engine
 │   ├── models.py           # Paper data models
 │   └── README.md           # Detailed documentation
@@ -148,7 +148,7 @@ Use `alithia.config_loader.load_config()` to load configuration from:
 4. **Content Generation**: Generate TLDR summaries using LLM
 5. **Communication**: Send email with recommendations
 
-**CLI Usage**: `python -m alithia.arxrec [-c CONFIG]`
+**CLI Usage**: `python -m alithia.run arxrec_agent [-c CONFIG]`
 
 ### AlithiaLens Workflow ✅ **Implemented**
 
@@ -157,7 +157,7 @@ Use `alithia.config_loader.load_config()` to load configuration from:
 3. **Semantic Search**: Find relevant sections using embeddings
 4. **Interactive Q&A**: Provide conversational interface for paper exploration
 
-**CLI Usage**: `python -m alithia.paperlens -i INPUT -d DIRECTORY [options]`
+**CLI Usage**: `python -m alithia.run paperlens_agent -i INPUT -d DIRECTORY [options]`
 
 ### AlithiaPulse Workflow ❌ **Not Implemented**
 
@@ -263,12 +263,12 @@ The project uses GitHub Actions for automated deployment:
 uv sync
 
 # Run ArXiv agent (requires configuration)
-uv run python -m alithia.arxrec
-uv run python -m alithia.arxrec --config config.json
+uv run python -m alithia.run arxrec_agent
+uv run python -m alithia.run arxrec_agent --config config.json
 
 # Run PaperLens (requires input file and PDF directory)
-uv run python -m alithia.paperlens -i topic.txt -d ./papers
-uv run python -m alithia.paperlens -i topic.txt -d ./papers -n 20 --verbose
+uv run python -m alithia.run paperlens_agent -i topic.txt -d ./papers
+uv run python -m alithia.run paperlens_agent -i topic.txt -d ./papers -n 20 --verbose
 
 # Run tests
 uv run pytest
