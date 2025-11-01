@@ -1,66 +1,66 @@
 """Data models for paperlens."""
 
-from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class FileMetadata:
+
+class FileMetadata(BaseModel):
     """Metadata about the PDF file itself."""
 
     file_path: Path
     file_name: str
-    file_size: int  # in bytes
+    file_size: int = Field(..., description="File size in bytes")
     last_modified: datetime
     md5_hash: Optional[str] = None
 
+    class Config:
+        arbitrary_types_allowed = True
 
-@dataclass
-class PaperMetadata:
+
+class PaperMetadata(BaseModel):
     """Metadata extracted from the paper content."""
 
-    title: Optional[str] = None
-    authors: List[str] = field(default_factory=list)
-    year: Optional[int] = None
-    abstract: Optional[str] = None
-    keywords: List[str] = field(default_factory=list)
-    doi: Optional[str] = None
-    venue: Optional[str] = None  # Journal or conference
-    field_topic: Optional[str] = None
+    title: Optional[str] = Field(None, description="The title of the paper")
+    authors: List[str] = Field(default_factory=list, description="List of author names")
+    year: Optional[int] = Field(None, description="Publication year (4-digit integer)")
+    abstract: Optional[str] = Field(None, description="Abstract or summary of the paper")
+    keywords: List[str] = Field(default_factory=list, description="List of keywords or topics")
+    doi: Optional[str] = Field(None, description="Digital Object Identifier (DOI)")
+    venue: Optional[str] = Field(None, description="Journal or conference name")
+    field_topic: Optional[str] = Field(None, description="Research field or topic area")
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
-@dataclass
-class PaperContent:
+class PaperContent(BaseModel):
     """Structured content from the paper."""
 
     full_text: str
-    sections: Dict[str, str] = field(default_factory=dict)  # section_name: content
-    references: List[str] = field(default_factory=list)
-    figures: List[str] = field(default_factory=list)
-    tables: List[str] = field(default_factory=list)
+    sections: Dict[str, str] = Field(default_factory=dict, description="Section name to content mapping")
+    references: List[str] = Field(default_factory=list, description="List of references")
+    figures: List[str] = Field(default_factory=list, description="List of figures")
+    tables: List[str] = Field(default_factory=list, description="List of tables")
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
-@dataclass
-class AcademicPaper:
+class AcademicPaper(BaseModel):
     """Complete data model for an academic paper."""
 
     file_metadata: FileMetadata
     paper_metadata: PaperMetadata
     content: PaperContent
-    similarity_score: float = 0.0  # Similarity to research topic
-    parse_timestamp: datetime = field(default_factory=datetime.now)
-    parsing_errors: List[str] = field(default_factory=list)
+    similarity_score: float = Field(default=0.0, description="Similarity to research topic")
+    parse_timestamp: datetime = Field(default_factory=datetime.now, description="When the paper was parsed")
+    parsing_errors: List[str] = Field(default_factory=list, description="List of parsing errors")
 
-    def __post_init__(self):
-        """Ensure all required fields are properly initialized."""
-        if not isinstance(self.file_metadata, FileMetadata):
-            raise ValueError("file_metadata must be a FileMetadata instance")
-        if not isinstance(self.paper_metadata, PaperMetadata):
-            raise ValueError("paper_metadata must be a PaperMetadata instance")
-        if not isinstance(self.content, PaperContent):
-            raise ValueError("content must be a PaperContent instance")
+    class Config:
+        arbitrary_types_allowed = True
 
     @property
     def display_title(self) -> str:
@@ -104,19 +104,17 @@ class AcademicPaper:
         return " ".join(parts)
 
     def to_dict(self) -> dict:
-        """Convert to dictionary for serialization."""
-        return {
-            "file_path": str(self.file_metadata.file_path),
-            "file_name": self.file_metadata.file_name,
-            "title": self.paper_metadata.title,
-            "authors": self.paper_metadata.authors,
-            "year": self.paper_metadata.year,
-            "abstract": self.paper_metadata.abstract,
-            "keywords": self.paper_metadata.keywords,
-            "doi": self.paper_metadata.doi,
-            "venue": self.paper_metadata.venue,
-            "field_topic": self.paper_metadata.field_topic,
-            "similarity_score": self.similarity_score,
-            "parse_timestamp": self.parse_timestamp.isoformat(),
-            "parsing_errors": self.parsing_errors,
-        }
+        """Convert to dictionary for serialization with custom formatting."""
+        # Use Pydantic's model_dump() method but customize Path and datetime serialization
+        result = self.model_dump()
+
+        # Convert Path to string
+        result["file_metadata"]["file_path"] = str(result["file_metadata"]["file_path"])
+
+        # Convert datetime to ISO format
+        if result["file_metadata"]["last_modified"]:
+            result["file_metadata"]["last_modified"] = result["file_metadata"]["last_modified"].isoformat()
+        if result["parse_timestamp"]:
+            result["parse_timestamp"] = result["parse_timestamp"].isoformat()
+
+        return result
