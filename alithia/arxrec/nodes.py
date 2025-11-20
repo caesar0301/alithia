@@ -2,12 +2,13 @@
 Agent nodes for the research agent workflow.
 """
 
+from datetime import datetime, timedelta
 from typing import List
 
 from cogents_core.utils import get_logger
 
 from alithia.researcher import ResearcherProfile
-from alithia.utils.arxiv_paper_utils import extract_affiliations, generate_tldr, get_arxiv_papers_feed, get_code_url
+from alithia.utils.arxiv_paper_utils import extract_affiliations, generate_tldr, get_arxiv_papers_search, get_code_url
 from alithia.utils.email_utils import send_email
 from alithia.utils.llm_utils import get_llm_client
 from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
@@ -97,9 +98,22 @@ def data_collection_node(state: AgentState) -> dict:
             corpus = filter_corpus(corpus, ignore_patterns)
             logger.info(f"Filtered corpus: {len(corpus)} papers remaining")
 
-        # Get ArXiv papers
-        logger.info("Retrieving ArXiv papers...")
-        papers = get_arxiv_papers_feed(state.config.query, state.debug_mode)
+        # Get ArXiv papers from last day (00:00 to 24:00)
+        logger.info("Retrieving ArXiv papers from last day...")
+
+        # Calculate yesterday's date range (00:00 to 24:00)
+        yesterday = datetime.now() - timedelta(days=1)
+        from_time = yesterday.strftime("%Y%m%d") + "0000"
+        to_time = yesterday.strftime("%Y%m%d") + "2359"
+
+        logger.info(f"Date range: {from_time} to {to_time}")
+        papers = get_arxiv_papers_search(
+            arxiv_query=state.config.query,
+            from_time=from_time,
+            to_time=to_time,
+            max_results=200,
+            debug=state.debug_mode,
+        )
         logger.info(f"Retrieved {len(papers)} valid papers from ArXiv")
 
         # Log paper details for debugging
