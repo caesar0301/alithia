@@ -1,28 +1,20 @@
 #!/usr/bin/env python3
-"""
-Basic example demonstrating how to use DoclingOCR to parse PDF files.
-
-This example shows:
-1. Basic PDF parsing without LLM
-2. Enhanced parsing with LLM for metadata extraction
-3. Displaying extracted information
-"""
+"""DoclingOCR example: PDF parsing with optional LLM enhancement."""
 
 import json
 import sys
 from pathlib import Path
 
-# Add the project root to the path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from cogents_core.llm import get_llm_client
 
-from alithia.paperlens.paper_ocr.docling_ocr import DoclingOCR
+from alithia.paperlens.paper_ocr.docling import DoclingOcr
 
 
 def print_separator(title: str = None):
-    """Print a formatted separator line."""
+    """Print formatted separator."""
     if title:
         print(f"\n{'=' * 70}")
         print(f"  {title}")
@@ -32,7 +24,7 @@ def print_separator(title: str = None):
 
 
 def display_paper_info(paper):
-    """Display extracted paper information in a formatted way."""
+    """Display extracted paper information."""
     if paper is None:
         print("❌ Failed to parse PDF")
         return
@@ -57,7 +49,6 @@ def display_paper_info(paper):
     print(f"\n📅 Year: {meta.year or 'Not extracted'}")
     print(f"🔖 DOI: {meta.doi or 'Not extracted'}")
     print(f"🏛️  Venue: {meta.venue or 'Not extracted'}")
-    print(f"🏷️  Field/Topic: {meta.field_topic or 'Not extracted'}")
 
     print(f"\n🏷️  Keywords ({len(meta.keywords)}):")
     if meta.keywords:
@@ -67,7 +58,6 @@ def display_paper_info(paper):
 
     print(f"\n📝 Abstract ({len(meta.abstract) if meta.abstract else 0} characters):")
     if meta.abstract:
-        # Display first 300 characters
         abstract_preview = meta.abstract[:300]
         if len(meta.abstract) > 300:
             abstract_preview += "..."
@@ -92,33 +82,20 @@ def display_paper_info(paper):
 
 
 def example_llm_enhanced_parsing(pdf_path: Path):
+    """Enhanced PDF parsing with LLM fallback for incomplete metadata.
+    Note: Requires OPENAI_API_KEY environment variable.
     """
-    Example 2: Enhanced PDF parsing with LLM.
-    If docling doesn't extract complete metadata, LLM will fill in the gaps.
-
-    Note: Requires OPENAI_API_KEY environment variable to be set.
-    """
-    print("\n🔍 EXAMPLE 2: Enhanced PDF Parsing (with LLM)")
+    print("\n🔍 Enhanced PDF Parsing (with LLM)")
     print_separator()
-
     try:
-        # Initialize DoclingOCR with LLM
-        print("Initializing DoclingOCR (with LLM)...")
-        ocr = DoclingOCR(llm=get_llm_client(provider="openrouter"))
-        print("✅ DoclingOCR initialized\n")
-
-        # Parse the PDF
-        print(f"Parsing PDF: {pdf_path.name}")
-        print("(If docling metadata is incomplete, LLM will enhance it)\n")
-        paper = ocr.parse_pdf(pdf_path)
-
-        # Display results
+        print("Initializing DoclingOCR with LLM...")
+        ocr = DoclingOcr(llm=get_llm_client(provider="openrouter"))
+        print("✅ Initialized\n")
+        paper = ocr.parse_file(pdf_path)
         display_paper_info(paper)
-
         return paper
-
     except Exception as e:
-        print(f"❌ Error in LLM-enhanced parsing: {e}")
+        print(f"❌ LLM-enhanced parsing failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -126,49 +103,42 @@ def example_llm_enhanced_parsing(pdf_path: Path):
 
 
 def example_save_to_json(paper, output_path: Path):
-    """
-    Example 3: Save parsed paper data to JSON file.
-    """
+    """Save parsed paper data to JSON."""
     if paper is None:
         print("⚠️  No paper data to save")
         return
 
-    print(f"\n💾 Saving parsed data to JSON: {output_path}")
+    print(f"\n💾 Saving to {output_path}")
     try:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(paper.to_dict(), f, indent=2, ensure_ascii=False, default=str)
-        print(f"✅ Successfully saved to {output_path}")
-        print(f"   File size: {output_path.stat().st_size / 1024:.2f} KB")
+        print(f"✅ Saved ({output_path.stat().st_size / 1024:.2f} KB)")
     except Exception as e:
-        print(f"❌ Failed to save JSON: {e}")
+        print(f"❌ Save failed: {e}")
 
 
 def main():
-    """Main function to run the examples."""
+    """Run PDF parsing examples."""
     print("=" * 70)
     print("  DoclingOCR Example - PDF Parsing Demonstration")
     print("=" * 70)
 
-    # Check if PDF path is provided
     if len(sys.argv) < 2:
         print("\n⚠️  Usage: python docling_ocr_example.py <path_to_pdf>")
         return
 
-    # Get PDF path from command line
     pdf_path = Path(sys.argv[1])
     if not pdf_path.exists():
-        print(f"\n❌ Error: PDF file not found: {pdf_path}")
+        print(f"\n❌ PDF not found: {pdf_path}")
         return
 
-    # Example 2: Try LLM-enhanced parsing (will fail gracefully if no API key)
     paper_enhanced = example_llm_enhanced_parsing(pdf_path)
 
-    # Example 3: Save enhanced result to JSON
     if paper_enhanced:
         output_path = pdf_path.parent / f"{pdf_path.stem}_parsed_enhanced.json"
         example_save_to_json(paper_enhanced, output_path)
 
-    print("\n✅ All examples completed!")
+    print("\n✅ Completed!")
 
 
 if __name__ == "__main__":

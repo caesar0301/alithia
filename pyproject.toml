@@ -35,19 +35,10 @@ dependencies = [
     "gitignore-parser>=0.1.11",
     "tiktoken>=0.8.0",
     "feedparser>=6.0.11",
-    # Exclude on macOS Intel (requires torch wheels not available there)
-    "sentence-transformers>=3.0.0; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
-    # PyTorch on Apple Silicon (arm64), Linux
-    "torch==2.4.1; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
-    "torchvision==0.19.1; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
-    "torchaudio==2.4.1; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
-    # PyTorch on macOS Intel (x86_64): exclude for Python >=3.11 (no wheels)
-    "torch==1.13.1; sys_platform == \"darwin\" and platform_machine == \"x86_64\" and python_version < '3.11'",
-    "torchvision==0.14.1; sys_platform == \"darwin\" and platform_machine == \"x86_64\" and python_version < '3.11'",
-    "torchaudio==0.13.1; sys_platform == \"darwin\" and platform_machine == \"x86_64\" and python_version < '3.11'",
-    # Docling requires modern PyTorch for VLM; exclude on macOS Intel
-    "docling>=2.58.0; (sys_platform == \"darwin\" and platform_machine == \"arm64\") or sys_platform == \"linux\"",
-    "onnxruntime-gpu>=1.23.2",
+    "sentence-transformers>=3.0.0",
+    # paperlens
+    "docling>=2.58.0",
+    "onnxruntime>=1.23.2",
 ]
 
 [project.optional-dependencies]

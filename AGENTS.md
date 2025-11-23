@@ -353,7 +353,4 @@ Enable debug logging by setting `debug: true` in configuration or using `-v` fla
 - **Type Hints**: Use type annotations for all functions
 - **Documentation**: Update docstrings and README files
 - **Testing**: Maintain test coverage above 80%
-
----
-
-This guide provides AI agents with comprehensive information about the Alithia project structure, capabilities, and development patterns. Use this as a reference when working with or extending the project.
+- **Comments & Logging**: Keep sharp and brief - avoid redundancy, remove obvious explanations, use concise language

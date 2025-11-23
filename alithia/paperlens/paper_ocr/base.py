@@ -5,9 +5,9 @@ from typing import Optional
 from alithia.paperlens.models import AcademicPaper
 
 
-class PaperOCRBase(ABC):
+class PaperOcrBase(ABC):
     """Base class for paper parsing."""
 
     @abstractmethod
-    def parse_pdf(self, pdf_path: Path) -> Optional[AcademicPaper]:
-        """Parse the PDF and return the AcademicPaper."""
+    def parse_file(self, file_path: Path) -> Optional[AcademicPaper]:
+        """Parse the file and return the AcademicPaper."""

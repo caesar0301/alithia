@@ -30,7 +30,6 @@ class PaperMetadata(BaseModel):
     keywords: List[str] = Field(default_factory=list, description="List of keywords or topics")
     doi: Optional[str] = Field(None, description="Digital Object Identifier (DOI)")
     venue: Optional[str] = Field(None, description="Journal or conference name")
-    field_topic: Optional[str] = Field(None, description="Research field or topic area")
 
     class Config:
         arbitrary_types_allowed = True

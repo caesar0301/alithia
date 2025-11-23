@@ -11,7 +11,7 @@ from typing import List
 
 from cogents_core.utils import get_logger
 
-from alithia.paperlens.paper_ocr.docling_ocr import DoclingOCR
+from alithia.paperlens.paper_ocr.docling import DoclingOcr
 
 logger = get_logger(__name__)
 
@@ -67,11 +67,11 @@ class PaperLensEngine:
         self.model = SentenceTransformer(sbert_model, device=device)
 
         self.llm = llm
-        self.ocr = DoclingOCR(llm=self.llm)
+        self.ocr = DoclingOcr(llm=self.llm)
 
         logger.info(f"PaperLens engine initialized (device: {device})")
 
-    def parse_pdf(self, pdf_path: Path) -> AcademicPaper:
+    def parse_file(self, pdf_path: Path) -> AcademicPaper:
         """
         Parse a single PDF file.
 
@@ -81,7 +81,7 @@ class PaperLensEngine:
         Returns:
             Parsed AcademicPaper object or None if parsing fails
         """
-        return self.ocr.parse_pdf(pdf_path)
+        return self.ocr.parse_file(pdf_path)
 
     def scan_pdf_directory(self, directory: Path, recursive: bool = True) -> List[AcademicPaper]:
         """
@@ -112,7 +112,7 @@ class PaperLensEngine:
         # Parse each PDF
         papers = []
         for pdf_path in pdf_files:
-            paper = self.ocr.parse_pdf(pdf_path)
+            paper = self.ocr.parse_file(pdf_path)
             if paper:
                 papers.append(paper)
 
