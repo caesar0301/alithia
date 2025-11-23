@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alithia"
-version = "0.2.5"
+version = "0.2.6"
 description = "Your ultimate research companion"
 readme = "README.md"
 license = "MIT"
