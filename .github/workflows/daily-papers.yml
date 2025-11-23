@@ -31,7 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip wheel
-        pip install -U sentence-transformers alithia
+        pip install -U alithia
 
     - name: Run ArXiv Research Agent
       env:
@@ -42,7 +42,7 @@ jobs:
           exit 1
         fi
         echo "$ALITHIA_CONFIG_JSON" > arxrec_config.json
-        python -m alithia.arxrec --config arxrec_config.json
+        python -m alithia.run arxrec_agent --config arxrec_config.json
         rm -rf arxrec_config.json
 
     - name: Upload logs on failure

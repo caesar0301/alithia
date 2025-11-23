@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from alithia.arxrec.arxiv_paper_utils import get_arxiv_papers
+from alithia.utils.arxiv_paper_utils import get_arxiv_papers_feed
 
 
 class TestArxivClientUnit:
@@ -28,7 +28,7 @@ class TestArxivClientUnit:
         mock_paper.pdf_url = "http://example.com/paper.pdf"
         mock_paper.published = "2024-01-01"
 
-        with patch("alithia.arxrec.arxiv_paper_utils.arxiv") as mock_arxiv:
+        with patch("alithia.utils.arxiv_paper_utils.arxiv") as mock_arxiv:
             # Mock the client and search
             mock_client = Mock()
             mock_search = Mock()
@@ -38,7 +38,7 @@ class TestArxivClientUnit:
             mock_client.results.return_value = [mock_paper]
 
             # Call the function
-            papers = get_arxiv_papers("cs.AI", debug=True)
+            papers = get_arxiv_papers_feed("cs.AI", debug=True)
 
             # Verify the results
             assert len(papers) == 1
@@ -55,12 +55,12 @@ class TestArxivClientUnit:
         mock_feed = Mock()
         mock_feed.feed = {"title": "Feed error for query"}
 
-        with patch("alithia.arxrec.arxiv_paper_utils.feedparser") as mock_feedparser:
+        with patch("alithia.utils.arxiv_paper_utils.feedparser") as mock_feedparser:
             mock_feedparser.parse.return_value = mock_feed
 
             # Should raise ValueError for invalid query
             with pytest.raises(ValueError, match="Invalid ARXIV_QUERY"):
-                get_arxiv_papers("invalid_query")
+                get_arxiv_papers_feed("invalid_query")
 
     @pytest.mark.unit
     def test_get_arxiv_papers_empty_feed_mocked(self):
@@ -70,11 +70,11 @@ class TestArxivClientUnit:
         mock_feed.feed = {"title": "ArXiv Query Results"}
         mock_feed.entries = []
 
-        with patch("alithia.arxrec.arxiv_paper_utils.feedparser") as mock_feedparser:
+        with patch("alithia.utils.arxiv_paper_utils.feedparser") as mock_feedparser:
             mock_feedparser.parse.return_value = mock_feed
 
             # Should return empty list
-            papers = get_arxiv_papers("cs.AI")
+            papers = get_arxiv_papers_feed("cs.AI")
             assert papers == []
 
     @pytest.mark.unit
@@ -102,8 +102,8 @@ class TestArxivClientUnit:
         mock_paper.published = "2024-01-01"
 
         with (
-            patch("alithia.arxrec.arxiv_paper_utils.feedparser") as mock_feedparser,
-            patch("alithia.arxrec.arxiv_paper_utils.arxiv") as mock_arxiv,
+            patch("alithia.utils.arxiv_paper_utils.feedparser") as mock_feedparser,
+            patch("alithia.utils.arxiv_paper_utils.arxiv") as mock_arxiv,
         ):
             mock_feedparser.parse.return_value = mock_feed
 
@@ -115,7 +115,7 @@ class TestArxivClientUnit:
             mock_client.results.return_value = [mock_paper]
 
             # Call the function
-            papers = get_arxiv_papers("cs.AI")
+            papers = get_arxiv_papers_feed("cs.AI")
 
             # Verify the results
             assert len(papers) == 1

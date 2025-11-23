@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip wheel
-        pip install -U sentence-transformers alithia
+        pip install -U alithia
 
     - name: Run ArXiv Research Agent (Debug Mode)
       env:
@@ -37,5 +37,5 @@ jobs:
         with open('arxrec_config_test.json', 'w') as f:
             json.dump(config, f, indent=2)
         "
-        python -m alithia.arxrec --config arxrec_config_test.json
+        python -m alithia.run arxrec_agent --config arxrec_config_test.json
         rm -rf arxrec_config_test.json

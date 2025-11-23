@@ -1,14 +1,6 @@
-"""
-FlashRank Reranking Demonstration
+"""FlashRank reranking demo: paper relevance scoring with time-decay weighting.
 
-This example demonstrates how FlashRank is used to rerank papers based on
-relevance to a user's research corpus. It shows:
-
-1. How FlashRank compares paper abstracts against a corpus
-2. The effect of time-decay weighting on older papers
-3. How the reranking identifies the most relevant papers
-
-The method used here mirrors the approach in alithia/arxrec/recommender.py
+Mirrors the approach in alithia/arxrec/recommender.py
 """
 
 from datetime import datetime, timedelta
@@ -19,10 +11,7 @@ from flashrank import Ranker, RerankRequest
 
 
 def create_sample_corpus() -> List[Dict[str, any]]:
-    """
-    Create a sample research corpus simulating Zotero papers.
-    These papers are about machine learning and computer vision.
-    """
+    """Create sample research corpus (ML/CV papers)."""
     base_date = datetime.now()
 
     corpus = [
@@ -67,10 +56,7 @@ def create_sample_corpus() -> List[Dict[str, any]]:
 
 
 def create_candidate_papers() -> List[Dict[str, str]]:
-    """
-    Create candidate papers to be reranked.
-    Some are relevant to the corpus, others are not.
-    """
+    """Create candidate papers for reranking (mixed relevance)."""
     papers = [
         {
             "title": "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows",
@@ -100,35 +86,30 @@ def create_candidate_papers() -> List[Dict[str, str]]:
 def rerank_with_flashrank(
     candidate_papers: List[Dict[str, str]], corpus: List[Dict[str, any]], model_name: str = "ms-marco-MiniLM-L-12-v2"
 ) -> List[Dict[str, any]]:
-    """
-    Rerank candidate papers based on relevance to corpus.
-    This mirrors the logic in alithia/arxrec/recommender.py
+    """Rerank papers by corpus relevance (mirrors alithia/arxrec/recommender.py).
 
     Args:
-        candidate_papers: Papers to be ranked
+        candidate_papers: Papers to rank
         corpus: User's research corpus
-        model_name: FlashRank model to use
+        model_name: FlashRank model
 
     Returns:
-        List of papers with scores, sorted by relevance
+        Papers with scores, sorted by relevance
     """
     if not candidate_papers or not corpus:
         return [{"paper": p, "score": 0.0} for p in candidate_papers]
 
-    # Initialize FlashRank ranker
-    print(f"Initializing FlashRank with model: {model_name}")
+    print(f"Initializing FlashRank: {model_name}")
     ranker = Ranker(model_name=model_name, cache_dir="/tmp/flashrank_cache")
 
-    # Sort corpus by date (newest first)
     sorted_corpus = sorted(
         corpus, key=lambda x: datetime.strptime(x["data"]["dateAdded"], "%Y-%m-%dT%H:%M:%SZ"), reverse=True
     )
 
-    print(f"\nCorpus sorted by date (newest first):")
+    print(f"\nCorpus (newest first):")
     for i, paper in enumerate(sorted_corpus):
         print(f"  {i+1}. {paper['data']['title']} ({paper['data']['dateAdded'][:10]})")
 
-    # Calculate time decay weights
     time_decay_weight = 1 / (1 + np.log10(np.arange(len(sorted_corpus)) + 1))
     time_decay_weight = time_decay_weight / time_decay_weight.sum()
 
@@ -136,10 +117,7 @@ def rerank_with_flashrank(
     for i, weight in enumerate(time_decay_weight):
         print(f"  Position {i+1}: {weight:.4f}")
 
-    # Prepare corpus abstracts as passages
     corpus_passages = [{"text": paper["data"]["abstractNote"]} for paper in sorted_corpus]
-
-    # Score each candidate paper
     scored_papers = []
 
     print("\n" + "=" * 80)
@@ -147,25 +125,19 @@ def rerank_with_flashrank(
     print("=" * 80)
 
     for idx, paper in enumerate(candidate_papers):
-        print(f"\n[{idx+1}/{len(candidate_papers)}] Analyzing: {paper['title']}")
+        print(f"\n[{idx+1}/{len(candidate_papers)}] {paper['title']}")
         print(f"Summary: {paper['summary'][:100]}...")
 
-        # Create rerank request
         rerank_request = RerankRequest(query=paper["summary"], passages=corpus_passages)
-
-        # Get reranking results
         results = ranker.rerank(rerank_request)
 
-        # Calculate weighted scores
         weighted_scores = []
-        print(f"\nRelevance to corpus papers:")
+        print(f"\nCorpus relevance:")
 
-        # Create a mapping from text to corpus index
         text_to_idx = {paper["data"]["abstractNote"]: idx for idx, paper in enumerate(sorted_corpus)}
 
         for result in results:
             relevance_score = result["score"]
-            # Find which corpus paper this result corresponds to
             corpus_idx = text_to_idx[result["text"]]
             weighted_score = relevance_score * time_decay_weight[corpus_idx]
             weighted_scores.append(weighted_score)
@@ -178,13 +150,11 @@ def rerank_with_flashrank(
                 f"Weighted: {weighted_score:.4f}"
             )
 
-        # Sum weighted scores and scale
         final_score = sum(weighted_scores) * 10
 
-        print(f"\n  Total weighted score: {sum(weighted_scores):.4f}")
-        print(f"  Final score (×10): {final_score:.4f}")
+        print(f"\n  Total weighted: {sum(weighted_scores):.4f}")
+        print(f"  Final (×10): {final_score:.4f}")
 
-        # Get the best match (first result has highest score)
         best_match_idx = text_to_idx[results[0]["text"]]
 
         scored_papers.append(
@@ -198,42 +168,36 @@ def rerank_with_flashrank(
             }
         )
 
-    # Sort by score (highest first)
     scored_papers.sort(key=lambda x: x["score"], reverse=True)
-
     return scored_papers
 
 
 def main():
-    """Run the FlashRank demonstration."""
+    """Run FlashRank demo."""
     print("=" * 80)
     print("FLASHRANK RERANKING DEMONSTRATION")
     print("=" * 80)
-    print("\nThis demo shows how FlashRank reranks papers based on relevance to a")
-    print("user's research corpus, using time-decay weighting to favor recent papers.")
+    print("\nReranks papers by corpus relevance with time-decay weighting.")
     print("\n" + "=" * 80)
 
-    # Create sample data
-    print("\nCreating sample research corpus...")
+    print("\nCreating sample corpus...")
     corpus = create_sample_corpus()
-    print(f"Corpus size: {len(corpus)} papers")
+    print(f"Corpus: {len(corpus)} papers")
 
-    print("\nCreating candidate papers to rank...")
+    print("\nCreating candidates...")
     candidates = create_candidate_papers()
     print(f"Candidates: {len(candidates)} papers")
 
-    # Perform reranking
     print("\n" + "=" * 80)
-    print("STARTING RERANKING PROCESS")
+    print("RERANKING PROCESS")
     print("=" * 80)
 
     results = rerank_with_flashrank(candidates, corpus)
 
-    # Display final results
     print("\n" + "=" * 80)
-    print("FINAL RANKING RESULTS")
+    print("FINAL RANKING")
     print("=" * 80)
-    print("\nPapers ranked by relevance to your research corpus:\n")
+    print("\nPapers by relevance:\n")
 
     for i, result in enumerate(results):
         print(f"{i+1}. [{result['score']:.4f}] {result['paper']['title']}")
@@ -241,32 +205,18 @@ def main():
         print(f"   Match score: {result['top_match_score']:.4f}")
         print()
 
-    # Analysis
     print("=" * 80)
-    print("ANALYSIS & VALIDITY")
+    print("ANALYSIS")
     print("=" * 80)
     print("\nKey observations:")
     print()
-    print("1. RELEVANCE DETECTION:")
-    print("   Papers about transformers and vision models score highest because")
-    print("   they match the corpus theme (ML/CV).")
-    print()
-    print("2. TIME DECAY WEIGHTING:")
-    print("   More recent corpus papers get higher weights, ensuring that")
-    print("   current research interests are prioritized.")
-    print()
-    print("3. IRRELEVANT PAPERS FILTERED:")
-    print("   Papers on unrelated topics (quantum computing, agriculture)")
-    print("   receive lower scores, showing the method's discriminative power.")
-    print()
-    print("4. SEMANTIC UNDERSTANDING:")
-    print("   FlashRank uses semantic similarity, not just keyword matching,")
-    print("   identifying conceptual relevance (e.g., ViT variations, attention).")
+    print("1. RELEVANCE: Transformer/vision papers score highest (match corpus theme)")
+    print("2. TIME DECAY: Recent corpus papers weighted higher (prioritize current interests)")
+    print("3. FILTERING: Unrelated topics (quantum, agriculture) score low")
+    print("4. SEMANTIC: Uses conceptual similarity, not just keywords")
     print()
     print("=" * 80)
-    print("\nThis demonstrates that the reranking method effectively identifies")
-    print("papers most relevant to a user's research interests based on their")
-    print("existing corpus, with appropriate weighting for recency.")
+    print("Method effectively identifies relevant papers with recency weighting.")
     print("=" * 80)
 
 

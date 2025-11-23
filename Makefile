@@ -1,7 +1,5 @@
 # Variables
 PYTHON = python3
-UV = uv
-PYTEST = pytest
 PYTHON_MODULES = alithia tests examples
 COVERAGE_MODULES = alithia
 TEST_DIR = tests
@@ -31,7 +29,7 @@ help: ## Show this help message
 
 install: ## Install development dependencies
 	@echo "$(BLUE)🔧 Installing development dependencies...$(RESET)"
-	@$(UV) sync --extra dev
+	@uv sync --extra dev
 
 setup: install ## Setup development environment
 	@echo "$(GREEN)✅ Development environment ready$(RESET)"
@@ -39,7 +37,7 @@ setup: install ## Setup development environment
 check-env: ## Check environment setup
 	@echo "$(BLUE)🔍 Checking environment...$(RESET)"
 	@echo "Python version: $$($(PYTHON) --version)"
-	@echo "uv version: $$($(UV) --version)"
+	@echo "uv version: $$(uv --version)"
 	@echo "Working directory: $$(pwd)"
 	@echo "Python modules: $(PYTHON_MODULES)"
 
@@ -51,23 +49,23 @@ check-env: ## Check environment setup
 
 test: ## Run all tests.
 	@echo "$(BLUE)🧪 Running all tests...$(RESET)"
-	$(UV) run $(PYTEST) $(TEST_DIR) -v
+	uv run pytest $(TEST_DIR) -v
 
 test-unit: ## Run unit tests only
 	@echo "$(BLUE)🧪 Running unit tests...$(RESET)"
-	$(UV) run $(PYTEST) $(TEST_DIR) -v -m "not integration"
+	uv run pytest $(TEST_DIR) -v -m "not integration"
 
 test-integration: ## Run integration tests only
 	@echo "$(BLUE)🧪 Running integration tests...$(RESET)"
-	$(UV) run $(PYTEST) $(TEST_DIR) -v -m "integration"
+	uv run pytest $(TEST_DIR) -v -m "integration"
 
 test-coverage: ## Run tests with coverage
 	@echo "$(BLUE)🧪 Running tests with coverage...$(RESET)"
-	$(UV) run $(PYTEST) $(TEST_DIR) --cov=$(COVERAGE_MODULES) --cov-report=html --cov-report=term-missing
+	uv run pytest $(TEST_DIR) --cov=$(COVERAGE_MODULES) --cov-report=html --cov-report=term-missing
 
 test-watch: ## Run tests in watch mode
 	@echo "$(BLUE)👀 Running tests in watch mode...$(RESET)"
-	$(UV) run pytest-watch $(TEST_DIR) -- -v
+	uv run pytest-watch $(TEST_DIR) -- -v
 
 # =============================================================================
 # CODE QUALITY COMMANDS
@@ -77,22 +75,22 @@ test-watch: ## Run tests in watch mode
 
 format: ## Format code (black, isort, autoflake)
 	@echo "$(BLUE)🎨 Formatting code...$(RESET)"
-	@$(UV) run python -m autoflake --in-place --recursive --remove-all-unused-imports --remove-unused-variables $(PYTHON_MODULES)
-	@$(UV) run isort $(PYTHON_MODULES) --line-length $(LINE_LENGTH)
-	@$(UV) run black $(PYTHON_MODULES) --line-length $(LINE_LENGTH)
+	@uvx --from autoflake autoflake --in-place --recursive --remove-all-unused-imports --remove-unused-variables $(PYTHON_MODULES)
+	@uvx --from isort isort $(PYTHON_MODULES) --line-length $(LINE_LENGTH)
+	@uvx --from black black $(PYTHON_MODULES) --line-length $(LINE_LENGTH)
 
 format-check: ## Check if code is properly formatted
 	@echo "$(BLUE)🔍 Checking code formatting...$(RESET)"
-	@$(UV) run black --check $(PYTHON_MODULES) || (echo "$(RED)❌ Code formatting check failed. Run 'make format' to fix.$(RESET)" && exit 1)
-	@$(UV) run isort --check-only $(PYTHON_MODULES) || (echo "$(RED)❌ Import sorting check failed. Run 'make format' to fix.$(RESET)" && exit 1)
+	@uv run black --check $(PYTHON_MODULES) || (echo "$(RED)❌ Code formatting check failed. Run 'make format' to fix.$(RESET)" && exit 1)
+	@uv run isort --check-only $(PYTHON_MODULES) || (echo "$(RED)❌ Import sorting check failed. Run 'make format' to fix.$(RESET)" && exit 1)
 
 lint: ## Lint code
 	@echo "$(BLUE)🔍 Running linters...$(RESET)"
-	@$(UV) run flake8 --max-line-length=$(LINE_LENGTH) --extend-ignore=E203,W503 $(PYTHON_MODULES)
+	@uv run flake8 --max-line-length=$(LINE_LENGTH) --extend-ignore=E203,W503 $(PYTHON_MODULES)
 
 lint-fix: ## Auto-fix linting issues where possible
 	@echo "$(BLUE)🔧 Auto-fixing linting issues...$(RESET)"
-	@$(UV) run python -m autoflake --in-place --recursive --remove-all-unused-imports --remove-unused-variables $(PYTHON_MODULES)
+	@uv run python -m autoflake --in-place --recursive --remove-all-unused-imports --remove-unused-variables $(PYTHON_MODULES)
 
 quality: format-check lint ## Run all quality checks
 	@echo "$(GREEN)🎉 All quality checks passed!$(RESET)"
@@ -107,15 +105,15 @@ autofix: lint-fix format ## Auto-fix all code quality issues
 
 build: ## Build package
 	@echo "$(BLUE)🔨 Building package...$(RESET)"
-	@$(UV) build
+	@uv build
 
 build-wheel: ## Build wheel
 	@echo "$(BLUE)🔨 Building wheel...$(RESET)"
-	@$(UV) build --wheel
+	@uv build --wheel
 
 build-sdist: ## Build source distribution
 	@echo "$(BLUE)🔨 Building source distribution...$(RESET)"
-	@$(UV) build --sdist
+	@uv build --sdist
 
 package: clean build ## Build and package for distribution
 
@@ -150,12 +148,12 @@ clean-all: clean ## Clean everything including dependencies
 
 shell: ## Activate development shell
 	@echo "$(BLUE)🐚 Activating development shell...$(RESET)"
-	@$(UV) shell
+	@uv shell
 
 requirements: ## Generate requirements files
 	@echo "$(BLUE)📋 Generating requirements files...$(RESET)"
-	@$(UV) export --format requirements-txt --output-file requirements.txt
-	@$(UV) export --format requirements-txt --output-file requirements-prod.txt --no-dev
+	@uv export --format requirements-txt --output-file requirements.txt
+	@uv export --format requirements-txt --output-file requirements-prod.txt --no-dev
 
 version: ## Show current version
 	@echo "$(BLUE)Current version:$(RESET)"
@@ -199,17 +197,17 @@ release: clean build ## Build all release artifacts
 
 publish: check-publish-prereqs ## Publish package to PyPI
 	@echo "$(BLUE)📦 Publishing to PyPI...$(RESET)"
-	@$(UV) publish
+	@uv publish
 	@echo "$(GREEN)✅ Package published to PyPI$(RESET)"
 
 publish-test: check-publish-prereqs ## Publish package to TestPyPI
 	@echo "$(BLUE)📦 Publishing to TestPyPI...$(RESET)"
-	@$(UV) publish --repository testpypi
+	@uv publish --repository testpypi
 	@echo "$(GREEN)✅ Package published to TestPyPI$(RESET)"
 
 check-publish-prereqs: ## Check prerequisites for publishing
 	@echo "$(BLUE)🔍 Checking publishing prerequisites...$(RESET)"
-	@$(UV) --version >/dev/null 2>&1 || (echo "$(RED)❌ uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh$(RESET)" && exit 1)
+	@uv --version >/dev/null 2>&1 || (echo "$(RED)❌ uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh$(RESET)" && exit 1)
 	@if [ -z "$${UV_PUBLISH_TOKEN}" ] && [ ! -f ~/.pypirc ]; then \
 		echo "$(YELLOW)⚠️  PyPI credentials not found. Set UV_PUBLISH_TOKEN or configure ~/.pypirc$(RESET)"; \
 		echo "$(BLUE)💡 You can set credentials with:$(RESET)"; \

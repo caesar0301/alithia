@@ -4,7 +4,7 @@ LLM utilities for content generation using cogents_core.llm.
 
 import logging
 
-from alithia.core.researcher.connection import LLMConnection
+from alithia.researcher.connection import LLMConnection
 
 logger = logging.getLogger(__name__)
 
