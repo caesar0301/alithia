@@ -8,7 +8,8 @@ from typing import List
 from cogents_core.utils import get_logger
 
 from alithia.researcher import ResearcherProfile
-from alithia.utils.arxiv_paper_utils import extract_affiliations, generate_tldr, get_arxiv_papers_search, get_code_url
+from alithia.utils.arxiv_paper_utils import extract_affiliations, generate_tldr, get_code_url
+from alithia.utils.paper_fetcher import fetch_arxiv_papers
 from alithia.utils.email_utils import send_email
 from alithia.utils.llm_utils import get_llm_client
 from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
@@ -107,14 +108,23 @@ def data_collection_node(state: AgentState) -> dict:
         to_time = yesterday.strftime("%Y%m%d") + "2359"
 
         logger.info(f"Date range: {from_time} to {to_time}")
-        papers = get_arxiv_papers_search(
-            arxiv_query=state.config.query,
-            from_time=from_time,
-            to_time=to_time,
-            max_results=200,
-            debug=state.debug_mode,
-        )
-        logger.info(f"Retrieved {len(papers)} valid papers from ArXiv")
+        
+        # Use enhanced paper fetcher with automatic fallback
+        try:
+            papers = fetch_arxiv_papers(
+                arxiv_query=state.config.query,
+                from_time=from_time,
+                to_time=to_time,
+                max_results=200,
+                debug=state.debug_mode,
+                max_retries=3,
+                enable_web_fallback=True,
+            )
+            logger.info(f"Retrieved {len(papers)} valid papers from ArXiv")
+        except Exception as e:
+            logger.error(f"Failed to fetch papers even with fallback: {e}")
+            state.add_error(f"Paper fetching failed: {str(e)}")
+            return {"current_step": "data_collection_error", "error_log": state.error_log}
 
         # Log paper details for debugging
         for i, paper in enumerate(papers):
