@@ -36,6 +36,8 @@ dependencies = [
     "tiktoken>=0.8.0",
     "feedparser>=6.0.11",
     "sentence-transformers>=3.0.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
     # paperlens
     "docling>=2.58.0",
     "onnxruntime>=1.23.2",

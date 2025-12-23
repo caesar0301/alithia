@@ -100,6 +100,12 @@ def get_arxiv_papers_search(
         ...     to_time="202510252359",
         ...     max_results=200
         ... )
+    
+    Note:
+        This function is kept for backward compatibility.
+        For production use, consider using the enhanced paper fetcher
+        from alithia.utils.paper_fetcher.fetch_arxiv_papers which includes
+        automatic fallback strategies.
     """
     # Build the search query using the utility function
     full_query = build_arxiv_search_query(arxiv_query, from_time, to_time)
@@ -115,16 +121,34 @@ def get_arxiv_papers_search(
     search = arxiv.Search(
         query=full_query,
         sort_by=arxiv.SortCriterion.SubmittedDate,
-        sort_order=arxiv.SortOrder.Ascending,
+        sort_order=arxiv.SortOrder.Descending,  # Changed to Descending for most recent first
         max_results=max_results,
     )
 
-    # Fetch and convert results
+    # Fetch and convert results with better error handling
     papers = []
-    for result in client.results(search):
-        paper = ArxivPaper.from_arxiv_result(result)
-        if paper is not None:
-            papers.append(paper)
+    error_count = 0
+    max_errors = 10  # Stop after 10 consecutive errors
+    
+    try:
+        for result in client.results(search):
+            try:
+                paper = ArxivPaper.from_arxiv_result(result)
+                if paper is not None:
+                    papers.append(paper)
+                    error_count = 0  # Reset error count on success
+            except Exception as e:
+                error_count += 1
+                logger.warning(f"Error processing paper result: {e}")
+                if error_count >= max_errors:
+                    logger.error(f"Too many errors ({max_errors}), stopping paper retrieval")
+                    break
+                continue
+    except Exception as e:
+        logger.error(f"Error fetching papers from ArXiv: {e}")
+        # Return what we have so far instead of failing completely
+        if not papers:
+            raise
 
     logger.info(f"Found {len(papers)} papers matching search criteria")
     return papers
