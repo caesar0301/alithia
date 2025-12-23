@@ -142,7 +142,7 @@ def test_rerank_sentence_transformer_success(sample_papers, sample_corpus):
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
     with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
-         patch('alithia.arxrec.reranker.cosine_similarity') as mock_sim:
+         patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         # Mock similarity matrix (3 papers x 3 corpus)
         mock_sim.return_value = np.array([
@@ -185,7 +185,7 @@ def test_rerank_sentence_transformer_with_invalid_corpus(sample_papers):
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
     with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
-         patch('alithia.arxrec.reranker.cosine_similarity') as mock_sim:
+         patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         mock_sim.return_value = np.array([[0.8], [0.7], [0.9]])
         
@@ -230,7 +230,7 @@ def test_rerank_sentence_transformer_papers_without_summary(sample_corpus):
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
     with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
-         patch('alithia.arxrec.reranker.cosine_similarity') as mock_sim:
+         patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         mock_sim.return_value = np.array([[0.8, 0.7, 0.6]])
         
@@ -295,7 +295,7 @@ def test_rerank_sentence_transformer_time_decay():
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
     with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
-         patch('alithia.arxrec.reranker.cosine_similarity') as mock_sim:
+         patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         # Same similarity for both corpus papers
         mock_sim.return_value = np.array([[0.8, 0.8]])
@@ -319,7 +319,7 @@ def test_rerank_sentence_transformer_custom_model(sample_papers, sample_corpus):
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
     with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder) as mock_st, \
-         patch('alithia.arxrec.reranker.cosine_similarity') as mock_sim:
+         patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         mock_sim.return_value = np.random.rand(3, 3)
         
@@ -344,7 +344,7 @@ def test_rerank_sentence_transformer_batch_size(sample_papers, sample_corpus):
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
     with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
-         patch('alithia.arxrec.reranker.cosine_similarity') as mock_sim:
+         patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         mock_sim.return_value = np.random.rand(3, 3)
         
