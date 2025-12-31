@@ -98,7 +98,7 @@ def test_rerank_sentence_transformer_no_papers(sample_corpus):
     """Test reranking with no papers returns empty list."""
     reranker = PaperReranker([], sample_corpus)
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer'):
+    with patch('sentence_transformers.SentenceTransformer'):
         result = reranker.rerank_sentence_transformer()
         
         assert result == []
@@ -109,7 +109,7 @@ def test_rerank_sentence_transformer_no_corpus(sample_papers):
     """Test reranking with no corpus returns default scores."""
     reranker = PaperReranker(sample_papers, [])
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer'):
+    with patch('sentence_transformers.SentenceTransformer'):
         result = reranker.rerank_sentence_transformer()
         
         assert len(result) == len(sample_papers)
@@ -141,7 +141,7 @@ def test_rerank_sentence_transformer_success(sample_papers, sample_corpus):
     
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
+    with patch('sentence_transformers.SentenceTransformer', return_value=mock_encoder), \
          patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         # Mock similarity matrix (3 papers x 3 corpus)
@@ -184,7 +184,7 @@ def test_rerank_sentence_transformer_with_invalid_corpus(sample_papers):
     paper_embeddings = np.random.rand(3, 384)
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
+    with patch('sentence_transformers.SentenceTransformer', return_value=mock_encoder), \
          patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         mock_sim.return_value = np.array([[0.8], [0.7], [0.9]])
@@ -215,7 +215,7 @@ def test_rerank_sentence_transformer_papers_without_summary(sample_corpus):
         ),
         ArxivPaper(
             title="Paper 3",
-            summary=None,  # None summary
+            summary="   ",  # Whitespace-only summary
             authors=["Author 3"],
             arxiv_id="2312.00003",
             pdf_url="url3"
@@ -229,7 +229,7 @@ def test_rerank_sentence_transformer_papers_without_summary(sample_corpus):
     paper_embeddings = np.random.rand(1, 384)  # Only 1 valid paper
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
+    with patch('sentence_transformers.SentenceTransformer', return_value=mock_encoder), \
          patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         mock_sim.return_value = np.array([[0.8, 0.7, 0.6]])
@@ -249,7 +249,7 @@ def test_rerank_sentence_transformer_error_fallback(sample_papers, sample_corpus
     mock_encoder = Mock()
     mock_encoder.encode.side_effect = Exception("Encoding failed")
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder):
+    with patch('sentence_transformers.SentenceTransformer', return_value=mock_encoder):
         result = reranker.rerank_sentence_transformer()
         
         # Should return fallback scores
@@ -294,7 +294,7 @@ def test_rerank_sentence_transformer_time_decay():
     paper_embeddings = np.random.rand(1, 384)
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
+    with patch('sentence_transformers.SentenceTransformer', return_value=mock_encoder), \
          patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         # Same similarity for both corpus papers
@@ -318,7 +318,7 @@ def test_rerank_sentence_transformer_custom_model(sample_papers, sample_corpus):
     paper_embeddings = np.random.rand(3, 384)
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder) as mock_st, \
+    with patch('sentence_transformers.SentenceTransformer', return_value=mock_encoder) as mock_st, \
          patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         mock_sim.return_value = np.random.rand(3, 3)
@@ -343,7 +343,7 @@ def test_rerank_sentence_transformer_batch_size(sample_papers, sample_corpus):
     paper_embeddings = np.random.rand(3, 384)
     mock_encoder.encode.side_effect = [corpus_embeddings, paper_embeddings]
     
-    with patch('alithia.arxrec.reranker.SentenceTransformer', return_value=mock_encoder), \
+    with patch('sentence_transformers.SentenceTransformer', return_value=mock_encoder), \
          patch('sklearn.metrics.pairwise.cosine_similarity') as mock_sim:
         
         mock_sim.return_value = np.random.rand(3, 3)
