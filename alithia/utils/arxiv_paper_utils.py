@@ -103,8 +103,8 @@ def get_arxiv_papers_search(
     
     Note:
         This function is kept for backward compatibility.
-        For production use, consider using the enhanced paper fetcher
-        from alithia.utils.paper_fetcher.fetch_arxiv_papers which includes
+        For production use, consider using the enhanced ArXiv paper fetcher
+        from alithia.utils.arxiv_paper_fetcher.fetch_arxiv_papers which includes
         automatic fallback strategies.
     """
     # Build the search query using the utility function

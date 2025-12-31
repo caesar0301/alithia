@@ -1,5 +1,5 @@
 """
-Unit tests for the enhanced paper fetcher module.
+Unit tests for the enhanced ArXiv paper fetcher module.
 """
 
 from datetime import datetime
@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch, MagicMock
 import pytest
 
 from alithia.models import ArxivPaper
-from alithia.utils.paper_fetcher import (
-    EnhancedPaperFetcher,
+from alithia.utils.arxiv_paper_fetcher import (
+    ArxivPaperFetcher,
     FetchStrategy,
     FetchResult,
     fetch_arxiv_papers,
@@ -54,9 +54,9 @@ def test_fetch_result_initialization():
 
 
 @pytest.mark.unit
-def test_enhanced_paper_fetcher_initialization():
-    """Test EnhancedPaperFetcher initialization."""
-    fetcher = EnhancedPaperFetcher(
+def test_arxiv_paper_fetcher_initialization():
+    """Test ArxivPaperFetcher initialization."""
+    fetcher = ArxivPaperFetcher(
         max_retries=5,
         retry_delay=2.0,
         timeout=60,
@@ -74,7 +74,7 @@ def test_enhanced_paper_fetcher_initialization():
 @pytest.mark.unit
 def test_fetch_papers_debug_mode(mock_paper, mock_arxiv_result):
     """Test fetch_papers in debug mode limits results."""
-    fetcher = EnhancedPaperFetcher()
+    fetcher = ArxivPaperFetcher()
     
     with patch.object(fetcher, '_fetch_with_api_search') as mock_api:
         mock_api.return_value = FetchResult(
@@ -101,7 +101,7 @@ def test_fetch_papers_debug_mode(mock_paper, mock_arxiv_result):
 @pytest.mark.unit
 def test_fetch_papers_api_search_success(mock_paper):
     """Test successful API search strategy."""
-    fetcher = EnhancedPaperFetcher()
+    fetcher = ArxivPaperFetcher()
     
     with patch.object(fetcher, '_fetch_with_api_search') as mock_api:
         mock_api.return_value = FetchResult(
@@ -126,7 +126,7 @@ def test_fetch_papers_api_search_success(mock_paper):
 @pytest.mark.unit
 def test_fetch_papers_rss_fallback(mock_paper):
     """Test fallback to RSS feed when API fails."""
-    fetcher = EnhancedPaperFetcher()
+    fetcher = ArxivPaperFetcher()
     
     with patch.object(fetcher, '_fetch_with_api_search') as mock_api, \
          patch.object(fetcher, '_fetch_with_rss_feed') as mock_rss:
@@ -162,7 +162,7 @@ def test_fetch_papers_rss_fallback(mock_paper):
 @pytest.mark.unit
 def test_fetch_papers_web_scraper_fallback(mock_paper):
     """Test fallback to web scraper when API and RSS fail."""
-    fetcher = EnhancedPaperFetcher(enable_web_fallback=True)
+    fetcher = ArxivPaperFetcher(enable_web_fallback=True)
     
     with patch.object(fetcher, '_fetch_with_api_search') as mock_api, \
          patch.object(fetcher, '_fetch_with_rss_feed') as mock_rss, \
@@ -208,7 +208,7 @@ def test_fetch_papers_web_scraper_fallback(mock_paper):
 @pytest.mark.unit
 def test_fetch_papers_all_strategies_fail():
     """Test when all fetch strategies fail."""
-    fetcher = EnhancedPaperFetcher(enable_web_fallback=True)
+    fetcher = ArxivPaperFetcher(enable_web_fallback=True)
     
     with patch.object(fetcher, '_fetch_with_api_search') as mock_api, \
          patch.object(fetcher, '_fetch_with_rss_feed') as mock_rss, \
@@ -237,7 +237,7 @@ def test_fetch_papers_all_strategies_fail():
 @pytest.mark.unit
 def test_fetch_with_api_search_retry_logic(mock_paper):
     """Test retry logic in API search."""
-    fetcher = EnhancedPaperFetcher(max_retries=3, retry_delay=0.1)
+    fetcher = ArxivPaperFetcher(max_retries=3, retry_delay=0.1)
     
     with patch.object(fetcher.arxiv_client, 'results') as mock_results:
         # All three attempts fail
@@ -247,7 +247,7 @@ def test_fetch_with_api_search_retry_logic(mock_paper):
             Exception("Connection timeout")
         ]
         
-        with patch('alithia.utils.paper_fetcher.ArxivPaper.from_arxiv_result') as mock_from:
+        with patch('alithia.utils.arxiv_paper_fetcher.ArxivPaper.from_arxiv_result') as mock_from:
             mock_from.return_value = mock_paper
             
             result = fetcher._fetch_with_api_search(
@@ -265,7 +265,7 @@ def test_fetch_with_api_search_retry_logic(mock_paper):
 @pytest.mark.unit
 def test_fetch_arxiv_papers_convenience_function(mock_paper):
     """Test the convenience function fetch_arxiv_papers."""
-    with patch('alithia.utils.paper_fetcher.EnhancedPaperFetcher') as mock_fetcher_class:
+    with patch('alithia.utils.arxiv_paper_fetcher.ArxivPaperFetcher') as mock_fetcher_class:
         mock_fetcher = Mock()
         mock_fetcher_class.return_value = mock_fetcher
         
@@ -291,7 +291,7 @@ def test_fetch_arxiv_papers_convenience_function(mock_paper):
 @pytest.mark.unit
 def test_fetch_arxiv_papers_raises_on_failure():
     """Test convenience function raises error when all strategies fail."""
-    with patch('alithia.utils.paper_fetcher.EnhancedPaperFetcher') as mock_fetcher_class:
+    with patch('alithia.utils.arxiv_paper_fetcher.ArxivPaperFetcher') as mock_fetcher_class:
         mock_fetcher = Mock()
         mock_fetcher_class.return_value = mock_fetcher
         
@@ -314,7 +314,7 @@ def test_fetch_arxiv_papers_raises_on_failure():
 @pytest.mark.unit
 def test_fetch_papers_no_dates_skips_api_search(mock_paper):
     """Test that API search is skipped when no dates are provided."""
-    fetcher = EnhancedPaperFetcher()
+    fetcher = ArxivPaperFetcher()
     
     with patch.object(fetcher, '_fetch_with_api_search') as mock_api, \
          patch.object(fetcher, '_fetch_with_rss_feed') as mock_rss:
@@ -339,7 +339,7 @@ def test_fetch_papers_no_dates_skips_api_search(mock_paper):
 @pytest.mark.unit
 def test_fetch_papers_web_fallback_disabled():
     """Test that web scraper is not used when disabled."""
-    fetcher = EnhancedPaperFetcher(enable_web_fallback=False)
+    fetcher = ArxivPaperFetcher(enable_web_fallback=False)
     
     with patch.object(fetcher, '_fetch_with_api_search') as mock_api, \
          patch.object(fetcher, '_fetch_with_rss_feed') as mock_rss, \
