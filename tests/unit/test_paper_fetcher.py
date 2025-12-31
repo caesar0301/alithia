@@ -240,11 +240,11 @@ def test_fetch_with_api_search_retry_logic(mock_paper):
     fetcher = EnhancedPaperFetcher(max_retries=3, retry_delay=0.1)
     
     with patch.object(fetcher.arxiv_client, 'results') as mock_results:
-        # First two attempts fail, third succeeds
+        # All three attempts fail
         mock_results.side_effect = [
             Exception("Network error"),
             Exception("Timeout"),
-            [Mock(return_value=mock_paper)]
+            Exception("Connection timeout")
         ]
         
         with patch('alithia.utils.paper_fetcher.ArxivPaper.from_arxiv_result') as mock_from:
