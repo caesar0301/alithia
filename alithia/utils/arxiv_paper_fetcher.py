@@ -1,7 +1,7 @@
 """
-Enhanced paper fetcher with API and web scraping fallback.
+Enhanced ArXiv paper fetcher with API and web scraping fallback.
 
-This module provides a robust paper fetching system that:
+This module provides a robust ArXiv paper fetching system that:
 1. Tries ArXiv API first (primary source)
 2. Falls back to RSS feed if API fails
 3. Uses web scraping as last resort
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class FetchStrategy(Enum):
-    """Available paper fetching strategies."""
+    """Available ArXiv paper fetching strategies."""
     API_SEARCH = "api_search"
     RSS_FEED = "rss_feed"
     WEB_SCRAPER = "web_scraper"
@@ -34,7 +34,7 @@ class FetchStrategy(Enum):
 
 @dataclass
 class FetchResult:
-    """Result of a paper fetch operation."""
+    """Result of an ArXiv paper fetch operation."""
     papers: List[ArxivPaper] = field(default_factory=list)
     strategy_used: Optional[FetchStrategy] = None
     success: bool = False
@@ -43,9 +43,9 @@ class FetchResult:
     elapsed_time: float = 0.0
 
 
-class EnhancedPaperFetcher:
+class ArxivPaperFetcher:
     """
-    Enhanced paper fetcher with multiple fallback strategies.
+    Enhanced ArXiv paper fetcher with multiple fallback strategies.
     
     Features:
     - Automatic retry with exponential backoff
@@ -62,7 +62,7 @@ class EnhancedPaperFetcher:
         enable_web_fallback: bool = True,
     ):
         """
-        Initialize the enhanced paper fetcher.
+        Initialize the enhanced ArXiv paper fetcher.
         
         Args:
             max_retries: Maximum number of retries per strategy
@@ -381,7 +381,7 @@ def fetch_arxiv_papers(
     enable_web_fallback: bool = True,
 ) -> List[ArxivPaper]:
     """
-    Convenience function to fetch papers with automatic fallback.
+    Convenience function to fetch ArXiv papers with automatic fallback.
     
     Args:
         arxiv_query: ArXiv query string (e.g., "cs.AI+cs.CV+cs.LG")
@@ -398,7 +398,7 @@ def fetch_arxiv_papers(
     Raises:
         ValueError: If no papers could be fetched
     """
-    fetcher = EnhancedPaperFetcher(
+    fetcher = ArxivPaperFetcher(
         max_retries=max_retries,
         enable_web_fallback=enable_web_fallback
     )
