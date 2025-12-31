@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/your-project-name
+      url: https://pypi.org/p/alithia
 
     steps:
     - uses: actions/checkout@v4
@@ -47,10 +47,14 @@ jobs:
       run: |
         uv run make build
         ls -la dist/
-        if [ ! -f dist/*.whl ] || [ ! -f dist/*.tar.gz ]; then
-          echo "❌ Missing build artifacts"
+        # Verify build artifacts exist
+        WHL_COUNT=$(ls -1 dist/*.whl 2>/dev/null | wc -l)
+        TAR_COUNT=$(ls -1 dist/*.tar.gz 2>/dev/null | wc -l)
+        if [ "$WHL_COUNT" -eq 0 ] || [ "$TAR_COUNT" -eq 0 ]; then
+          echo "❌ Missing build artifacts (found $WHL_COUNT .whl and $TAR_COUNT .tar.gz files)"
           exit 1
         fi
+        echo "✅ Found $WHL_COUNT .whl and $TAR_COUNT .tar.gz files"
 
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
