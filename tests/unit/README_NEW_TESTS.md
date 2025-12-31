@@ -4,7 +4,7 @@ This directory contains comprehensive unit tests for the enhanced ArXiv recommen
 
 ## New Test Suites
 
-### 1. `test_arxiv_arxiv_paper_fetcher.py` (18 tests)
+### 1. `test_arxiv_paper_fetcher.py` (18 tests)
 
 Tests for the enhanced ArXiv paper fetcher with automatic fallback strategies.
 
@@ -21,21 +21,21 @@ Tests for the enhanced ArXiv paper fetcher with automatic fallback strategies.
 **Key Tests:**
 ```bash
 # Test successful API search
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py::test_fetch_papers_api_search_success -v
+pytest tests/unit/test_arxiv_paper_fetcher.py::test_fetch_papers_api_search_success -v
 
 # Test fallback to RSS when API fails
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py::test_fetch_papers_rss_fallback -v
+pytest tests/unit/test_arxiv_paper_fetcher.py::test_fetch_papers_rss_fallback -v
 
 # Test web scraper as last resort
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py::test_fetch_papers_web_scraper_fallback -v
+pytest tests/unit/test_arxiv_paper_fetcher.py::test_fetch_papers_web_scraper_fallback -v
 
 # Test retry logic
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py::test_fetch_with_api_search_retry_logic -v
+pytest tests/unit/test_arxiv_paper_fetcher.py::test_fetch_with_api_search_retry_logic -v
 ```
 
 **Run All Paper Fetcher Tests:**
 ```bash
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py -v
+pytest tests/unit/test_arxiv_paper_fetcher.py -v
 ```
 
 ---
@@ -116,14 +116,14 @@ pytest tests/unit/test_reranker.py -v
 
 ### Run All New Tests
 ```bash
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py tests/unit/test_web_scraper.py tests/unit/test_reranker.py -v
+pytest tests/unit/test_arxiv_paper_fetcher.py tests/unit/test_web_scraper.py tests/unit/test_reranker.py -v
 ```
 
 ### Run Tests by Category
 
 **Paper Fetching Tests:**
 ```bash
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py -v
+pytest tests/unit/test_arxiv_paper_fetcher.py -v
 ```
 
 **Web Scraping Tests:**
@@ -139,7 +139,7 @@ pytest tests/unit/test_reranker.py -v
 ### Run Tests with Coverage
 
 ```bash
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py --cov=alithia.utils.paper_fetcher --cov-report=html
+pytest tests/unit/test_arxiv_paper_fetcher.py --cov=alithia.utils.paper_fetcher --cov-report=html
 pytest tests/unit/test_web_scraper.py --cov=alithia.utils.web_scraper --cov-report=html
 pytest tests/unit/test_reranker.py --cov=alithia.arxrec.reranker --cov-report=html
 ```
@@ -148,7 +148,7 @@ pytest tests/unit/test_reranker.py --cov=alithia.arxrec.reranker --cov-report=ht
 
 ```bash
 # Run tests matching a pattern
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py -k "fallback" -v
+pytest tests/unit/test_arxiv_paper_fetcher.py -k "fallback" -v
 
 # Run a single test
 pytest tests/unit/test_web_scraper.py::test_parse_paper_entry_valid -v
@@ -165,7 +165,7 @@ pytest tests/unit/ -m unit -v
 
 Each test module includes fixtures for common test data:
 
-**test_arxiv_arxiv_paper_fetcher.py:**
+**test_arxiv_paper_fetcher.py:**
 - `mock_paper`: Sample ArxivPaper object
 - `mock_arxiv_result`: Mock arxiv.Result object
 
@@ -243,7 +243,7 @@ Tests run automatically on:
 Run tests before committing:
 ```bash
 # Quick test
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py -x
+pytest tests/unit/test_arxiv_paper_fetcher.py -x
 
 # Full test suite
 pytest tests/unit/ -v
@@ -258,17 +258,17 @@ pytest tests/unit/ --cov=alithia --cov-report=term-missing
 
 ### Run with Detailed Output
 ```bash
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py -vv
+pytest tests/unit/test_arxiv_paper_fetcher.py -vv
 ```
 
 ### Run with Print Statements
 ```bash
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py -s
+pytest tests/unit/test_arxiv_paper_fetcher.py -s
 ```
 
 ### Run with Debug Mode
 ```bash
-pytest tests/unit/test_arxiv_arxiv_paper_fetcher.py --pdb
+pytest tests/unit/test_arxiv_paper_fetcher.py --pdb
 ```
 
 ### Show Test Duration
