@@ -164,7 +164,7 @@ def test_build_config_from_envs_research_interests():
 
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
-        assert config["research_interests"] == ["AI", "Machine Learning", "Computer Vision"]
+        assert config["researcher_profile"]["research_interests"] == ["AI", "Machine Learning", "Computer Vision"]
 
 
 @pytest.mark.unit
@@ -177,9 +177,9 @@ def test_build_config_from_envs_integer_conversion():
 
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
-        assert config["email_notification"]["smtp_port"] == 587
+        assert config["researcher_profile"]["email_notification"]["smtp_port"] == 587
         assert config["paperscout_agent"]["max_papers"] == 50
-        assert isinstance(config["email_notification"]["smtp_port"], int)
+        assert isinstance(config["researcher_profile"]["email_notification"]["smtp_port"], int)
         assert isinstance(config["paperscout_agent"]["max_papers"], int)
 
 
@@ -226,7 +226,11 @@ def test_build_config_from_envs_integer_conversion_invalid():
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
         # Invalid integer values should be skipped
-        assert "email_notification" not in config or "smtp_port" not in config.get("email_notification", {})
+        assert (
+            "researcher_profile" not in config
+            or "email_notification" not in config.get("researcher_profile", {})
+            or "smtp_port" not in config.get("researcher_profile", {}).get("email_notification", {})
+        )
 
 
 @pytest.mark.unit
@@ -240,9 +244,9 @@ def test_build_config_from_envs_all_llm_settings():
 
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
-        assert config["llm"]["openai_api_key"] == "test_key"
-        assert config["llm"]["openai_api_base"] == "https://api.example.com/v1"
-        assert config["llm"]["model_name"] == "gpt-4o"
+        assert config["researcher_profile"]["llm"]["openai_api_key"] == "test_key"
+        assert config["researcher_profile"]["llm"]["openai_api_base"] == "https://api.example.com/v1"
+        assert config["researcher_profile"]["llm"]["model_name"] == "gpt-4o"
 
 
 @pytest.mark.unit
@@ -255,8 +259,8 @@ def test_build_config_from_envs_all_zotero_settings():
 
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
-        assert config["zotero"]["zotero_id"] == "test_id"
-        assert config["zotero"]["zotero_key"] == "test_key"
+        assert config["researcher_profile"]["zotero"]["zotero_id"] == "test_id"
+        assert config["researcher_profile"]["zotero"]["zotero_key"] == "test_key"
 
 
 @pytest.mark.unit
@@ -272,11 +276,11 @@ def test_build_config_from_envs_all_email_notification_settings():
 
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
-        assert config["email_notification"]["smtp_server"] == "smtp.example.com"
-        assert config["email_notification"]["smtp_port"] == 587
-        assert config["email_notification"]["sender"] == "sender@example.com"
-        assert config["email_notification"]["sender_password"] == "password"
-        assert config["email_notification"]["receiver"] == "receiver@example.com"
+        assert config["researcher_profile"]["email_notification"]["smtp_server"] == "smtp.example.com"
+        assert config["researcher_profile"]["email_notification"]["smtp_port"] == 587
+        assert config["researcher_profile"]["email_notification"]["sender"] == "sender@example.com"
+        assert config["researcher_profile"]["email_notification"]["sender_password"] == "password"
+        assert config["researcher_profile"]["email_notification"]["receiver"] == "receiver@example.com"
 
 
 @pytest.mark.unit
@@ -310,24 +314,26 @@ def test_load_config_env_only():
         with mock.patch.dict(os.environ, env_vars, clear=False):
             config = load_config()
 
-            assert config["llm"]["openai_api_key"] == "test_key"
-            assert config["llm"]["model_name"] == "gpt-4o"
-            assert config["zotero"]["zotero_id"] == "zotero_123"
+            assert config["researcher_profile"]["llm"]["openai_api_key"] == "test_key"
+            assert config["researcher_profile"]["llm"]["model_name"] == "gpt-4o"
+            assert config["researcher_profile"]["zotero"]["zotero_id"] == "zotero_123"
 
 
 @pytest.mark.unit
 def test_load_config_file_only():
     """Test loading config from JSON file only."""
     config_data = {
-        "research_interests": ["AI", "ML"],
-        "llm": {
-            "openai_api_key": "file_key",
-            "model_name": "gpt-3.5",
-        },
-        "zotero": {
-            "zotero_id": "file_id",
-            "zotero_key": "file_key",
-        },
+        "researcher_profile": {
+            "research_interests": ["AI", "ML"],
+            "llm": {
+                "openai_api_key": "file_key",
+                "model_name": "gpt-3.5",
+            },
+            "zotero": {
+                "zotero_id": "file_id",
+                "zotero_key": "file_key",
+            },
+        }
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -338,10 +344,10 @@ def test_load_config_file_only():
         with mock.patch.dict(os.environ, {}, clear=True):
             config = load_config(temp_path)
 
-            assert config["research_interests"] == ["AI", "ML"]
-            assert config["llm"]["openai_api_key"] == "file_key"
-            assert config["llm"]["model_name"] == "gpt-3.5"
-            assert config["zotero"]["zotero_id"] == "file_id"
+            assert config["researcher_profile"]["research_interests"] == ["AI", "ML"]
+            assert config["researcher_profile"]["llm"]["openai_api_key"] == "file_key"
+            assert config["researcher_profile"]["llm"]["model_name"] == "gpt-3.5"
+            assert config["researcher_profile"]["zotero"]["zotero_id"] == "file_id"
     finally:
         os.unlink(temp_path)
 
@@ -350,14 +356,16 @@ def test_load_config_file_only():
 def test_load_config_env_overrides_file():
     """Test that environment variables take precedence over file config."""
     config_data = {
-        "llm": {
-            "openai_api_key": "file_key",
-            "model_name": "gpt-3.5",
-        },
-        "zotero": {
-            "zotero_id": "file_id",
-            "zotero_key": "file_key",
-        },
+        "researcher_profile": {
+            "llm": {
+                "openai_api_key": "file_key",
+                "model_name": "gpt-3.5",
+            },
+            "zotero": {
+                "zotero_id": "file_id",
+                "zotero_key": "file_key",
+            },
+        }
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -374,12 +382,12 @@ def test_load_config_env_overrides_file():
             config = load_config(temp_path)
 
             # Environment values should override file values
-            assert config["llm"]["openai_api_key"] == "env_key"
-            assert config["zotero"]["zotero_id"] == "env_id"
+            assert config["researcher_profile"]["llm"]["openai_api_key"] == "env_key"
+            assert config["researcher_profile"]["zotero"]["zotero_id"] == "env_id"
 
             # File values should remain for non-overridden keys
-            assert config["llm"]["model_name"] == "gpt-3.5"
-            assert config["zotero"]["zotero_key"] == "file_key"
+            assert config["researcher_profile"]["llm"]["model_name"] == "gpt-3.5"
+            assert config["researcher_profile"]["zotero"]["zotero_key"] == "file_key"
     finally:
         os.unlink(temp_path)
 
@@ -388,16 +396,18 @@ def test_load_config_env_overrides_file():
 def test_load_config_merged_nested_structures():
     """Test loading and merging complex nested structures."""
     config_data = {
-        "llm": {
-            "openai_api_key": "file_key",
-            "model_name": "gpt-3.5",
-            "openai_api_base": "https://api.openai.com/v1",
-        },
-        "email_notification": {
-            "smtp_server": "smtp.example.com",
-            "smtp_port": 587,
-            "sender": "sender@example.com",
-        },
+        "researcher_profile": {
+            "llm": {
+                "openai_api_key": "file_key",
+                "model_name": "gpt-3.5",
+                "openai_api_base": "https://api.openai.com/v1",
+            },
+            "email_notification": {
+                "smtp_server": "smtp.example.com",
+                "smtp_port": 587,
+                "sender": "sender@example.com",
+            },
+        }
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -414,14 +424,14 @@ def test_load_config_merged_nested_structures():
             config = load_config(temp_path)
 
             # Check merged LLM config
-            assert config["llm"]["openai_api_key"] == "env_key"
-            assert config["llm"]["model_name"] == "gpt-3.5"
-            assert config["llm"]["openai_api_base"] == "https://api.openai.com/v1"
+            assert config["researcher_profile"]["llm"]["openai_api_key"] == "env_key"
+            assert config["researcher_profile"]["llm"]["model_name"] == "gpt-3.5"
+            assert config["researcher_profile"]["llm"]["openai_api_base"] == "https://api.openai.com/v1"
 
             # Check merged email notification config
-            assert config["email_notification"]["smtp_server"] == "smtp.env.com"
-            assert config["email_notification"]["smtp_port"] == 587
-            assert config["email_notification"]["sender"] == "sender@example.com"
+            assert config["researcher_profile"]["email_notification"]["smtp_server"] == "smtp.env.com"
+            assert config["researcher_profile"]["email_notification"]["smtp_port"] == 587
+            assert config["researcher_profile"]["email_notification"]["sender"] == "sender@example.com"
     finally:
         os.unlink(temp_path)
 
@@ -430,10 +440,12 @@ def test_load_config_merged_nested_structures():
 def test_load_config_general_settings():
     """Test loading general settings from both sources."""
     config_data = {
-        "research_interests": ["File Interest"],
-        "expertise_level": "beginner",
-        "language": "English",
-        "email": "file@example.com",
+        "researcher_profile": {
+            "research_interests": ["File Interest"],
+            "expertise_level": "beginner",
+            "language": "English",
+            "email": "file@example.com",
+        }
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -450,14 +462,14 @@ def test_load_config_general_settings():
             config = load_config(temp_path)
 
             # Environment overrides for email
-            assert config["email"] == "env@example.com"
+            assert config["researcher_profile"]["email"] == "env@example.com"
 
             # Environment overrides for research interests
-            assert config["research_interests"] == ["AI", "ML", "CV"]
+            assert config["researcher_profile"]["research_interests"] == ["AI", "ML", "CV"]
 
             # File values for non-overridden keys
-            assert config["expertise_level"] == "beginner"
-            assert config["language"] == "English"
+            assert config["researcher_profile"]["expertise_level"] == "beginner"
+            assert config["researcher_profile"]["language"] == "English"
     finally:
         os.unlink(temp_path)
 
@@ -511,7 +523,7 @@ def test_load_config_with_whitespace_in_lists():
             config = _build_config_from_envs()
 
             # Whitespace should be stripped
-            assert config["research_interests"] == ["AI", "Machine Learning", "Computer Vision"]
+            assert config["researcher_profile"]["research_interests"] == ["AI", "Machine Learning", "Computer Vision"]
             assert config["paperscout_agent"]["ignore_patterns"] == ["pattern1", "pattern2"]
 
 
@@ -528,7 +540,9 @@ def test_load_config_empty_list_handling():
             config = _build_config_from_envs()
 
             # Empty research interests should not be in config
-            assert "research_interests" not in config
+            assert "researcher_profile" not in config or "research_interests" not in config.get(
+                "researcher_profile", {}
+            )
 
             # Whitespace-only patterns should result in empty list
             assert config["paperscout_agent"]["ignore_patterns"] == []

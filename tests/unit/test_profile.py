@@ -14,38 +14,40 @@ from alithia.researcher.profile import ResearcherProfile
 @pytest.mark.unit
 def test_profile_from_config_defaults_and_values():
     cfg = {
-        "email": "test@example.com",
-        "research_interests": ["AI"],
-        "expertise_level": "advanced",
-        "language": "English",
-        "zotero": {
-            "zotero_id": "zid",
-            "zotero_key": "zkey",
-        },
-        "llm": {
-            "openai_api_key": "ok",
-            "openai_api_base": "http://base",
-            "model_name": "gpt-x",
-        },
-        "email_notification": {
-            "smtp_server": "smtp.example.com",
-            "smtp_port": 587,
-            "sender": "sender@example.com",
-            "sender_password": "pass",
-            "receiver": "recv@example.com",
-        },
-        "github": {
-            "github_username": "test_user",
-            "github_token": "test_token",
-        },
-        "google_scholar": {
-            "google_scholar_id": "test_id",
-            "google_scholar_token": "test_token",
-        },
-        "x": {
-            "x_username": "test_user",
-            "x_token": "test_token",
-        },
+        "researcher_profile": {
+            "email": "test@example.com",
+            "research_interests": ["AI"],
+            "expertise_level": "advanced",
+            "language": "English",
+            "zotero": {
+                "zotero_id": "zid",
+                "zotero_key": "zkey",
+            },
+            "llm": {
+                "openai_api_key": "ok",
+                "openai_api_base": "http://base",
+                "model_name": "gpt-x",
+            },
+            "email_notification": {
+                "smtp_server": "smtp.example.com",
+                "smtp_port": 587,
+                "sender": "sender@example.com",
+                "sender_password": "pass",
+                "receiver": "recv@example.com",
+            },
+            "github": {
+                "github_username": "test_user",
+                "github_token": "test_token",
+            },
+            "google_scholar": {
+                "google_scholar_id": "test_id",
+                "google_scholar_token": "test_token",
+            },
+            "x": {
+                "x_username": "test_user",
+                "x_token": "test_token",
+            },
+        }
     }
     p = ResearcherProfile.from_config(cfg)
 

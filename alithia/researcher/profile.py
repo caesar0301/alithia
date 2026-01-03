@@ -43,12 +43,15 @@ class ResearcherProfile(BaseModel):
     def from_config(cls, config: Dict[str, Any]) -> "ResearcherProfile":
         """Create ResearcherProfile from configuration dictionary."""
 
-        if not _validate(config):
+        # Extract researcher_profile section
+        profile_config = config.get("researcher_profile", {})
+
+        if not _validate(profile_config):
             raise ValueError("Invalid configuration")
 
         # Helper function to safely create optional connections
         def safe_create_connection(connection_class, config_key):
-            config_data = config.get(connection_class.__name__.lower(), {})
+            config_data = profile_config.get(connection_class.__name__.lower(), {})
             if config_data:
                 try:
                     return connection_class(**config_data)
@@ -58,19 +61,21 @@ class ResearcherProfile(BaseModel):
             return None
 
         return cls(
-            research_interests=config.get("research_interests", []),
-            expertise_level=config.get("expertise_level", "intermediate"),
-            language=config.get("language", "English"),
-            email=config.get("email", ""),
-            llm=LLMConnection(**config.get("llm", {})),
-            zotero=ZoteroConnection(**config.get("zotero", {})),
-            email_notification=EmailConnection(**config.get("email_notification", {})),
-            github=GithubConnection(**config.get("github", {})) if config.get("github") else None,
+            research_interests=profile_config.get("research_interests", []),
+            expertise_level=profile_config.get("expertise_level", "intermediate"),
+            language=profile_config.get("language", "English"),
+            email=profile_config.get("email", ""),
+            llm=LLMConnection(**profile_config.get("llm", {})),
+            zotero=ZoteroConnection(**profile_config.get("zotero", {})),
+            email_notification=EmailConnection(**profile_config.get("email_notification", {})),
+            github=GithubConnection(**profile_config.get("github", {})) if profile_config.get("github") else None,
             google_scholar=(
-                GoogleScholarConnection(**config.get("google_scholar", {})) if config.get("google_scholar") else None
+                GoogleScholarConnection(**profile_config.get("google_scholar", {}))
+                if profile_config.get("google_scholar")
+                else None
             ),
-            x=XConnection(**config.get("x", {})) if config.get("x") else None,
-            gems=config.get("gems", {}),
+            x=XConnection(**profile_config.get("x", {})) if profile_config.get("x") else None,
+            gems=profile_config.get("gems", {}),
         )
 
 
