@@ -11,16 +11,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
       with:
-        python-version: '3.11'
-        cache: 'pip'
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.11
 
     - name: Install dependencies
-      run: |
-        pip install --upgrade pip wheel
-        pip install -U alithia
+      run: uv sync --all-extras
 
     - name: Run ArXiv Research Agent (Debug Mode)
       env:
@@ -37,5 +37,5 @@ jobs:
         with open('arxrec_config_test.json', 'w') as f:
             json.dump(config, f, indent=2)
         "
-        python -m alithia.run arxrec_agent --config arxrec_config_test.json
+        uv run python -m alithia.run arxrec_agent --config arxrec_config_test.json
         rm -rf arxrec_config_test.json
