@@ -532,3 +532,136 @@ def test_load_config_empty_list_handling():
 
             # Whitespace-only patterns should result in empty list
             assert config["paperscout_agent"]["ignore_patterns"] == []
+
+
+@pytest.mark.unit
+def test_build_config_from_envs_supabase_settings():
+    """Test that Supabase settings are loaded from environment variables."""
+    env_vars = {
+        "ALITHIA_SUPABASE_URL": "https://test-project.supabase.co",
+        "ALITHIA_SUPABASE_ANON_KEY": "test_anon_key_12345",
+        "ALITHIA_SUPABASE_SERVICE_ROLE_KEY": "test_service_role_key_67890",
+    }
+
+    with mock.patch.dict(os.environ, env_vars, clear=False):
+        config = _build_config_from_envs()
+
+        assert "supabase" in config
+        assert config["supabase"]["url"] == "https://test-project.supabase.co"
+        assert config["supabase"]["anon_key"] == "test_anon_key_12345"
+        assert config["supabase"]["service_role_key"] == "test_service_role_key_67890"
+
+
+@pytest.mark.unit
+def test_build_config_from_envs_storage_settings():
+    """Test that storage settings are loaded from environment variables."""
+    env_vars = {
+        "ALITHIA_STORAGE_BACKEND": "supabase",
+        "ALITHIA_STORAGE_FALLBACK_TO_SQLITE": "true",
+        "ALITHIA_STORAGE_SQLITE_PATH": "data/custom.db",
+        "ALITHIA_STORAGE_USER_ID": "custom_user",
+    }
+
+    with mock.patch.dict(os.environ, env_vars, clear=False):
+        config = _build_config_from_envs()
+
+        assert "storage" in config
+        assert config["storage"]["backend"] == "supabase"
+        assert config["storage"]["fallback_to_sqlite"] is True
+        assert config["storage"]["sqlite_path"] == "data/custom.db"
+        assert config["storage"]["user_id"] == "custom_user"
+
+
+@pytest.mark.unit
+def test_build_config_from_envs_storage_boolean_conversion():
+    """Test boolean conversion for storage.fallback_to_sqlite."""
+    test_cases = [
+        ("true", True),
+        ("True", True),
+        ("TRUE", True),
+        ("1", True),
+        ("yes", True),
+        ("false", False),
+        ("False", False),
+        ("0", False),
+        ("no", False),
+        ("", False),  # Empty string defaults to False
+    ]
+
+    for value_str, expected in test_cases:
+        env_vars = {"ALITHIA_STORAGE_FALLBACK_TO_SQLITE": value_str}
+
+        with mock.patch.dict(os.environ, env_vars, clear=False):
+            config = _build_config_from_envs()
+
+            if value_str == "":
+                # Empty string should not add the key
+                assert "storage" not in config or "fallback_to_sqlite" not in config.get("storage", {})
+            else:
+                assert (
+                    config["storage"]["fallback_to_sqlite"] == expected
+                ), f"Expected {expected} for value '{value_str}', got {config['storage']['fallback_to_sqlite']}"
+
+
+@pytest.mark.unit
+def test_load_config_storage_env_overrides_file():
+    """Test that storage env variables override file configuration."""
+    file_content = {
+        "supabase": {
+            "url": "https://file-project.supabase.co",
+            "anon_key": "file_anon_key",
+        },
+        "storage": {
+            "backend": "sqlite",
+            "sqlite_path": "data/file.db",
+        },
+    }
+
+    env_vars = {
+        "ALITHIA_SUPABASE_URL": "https://env-project.supabase.co",
+        "ALITHIA_STORAGE_BACKEND": "supabase",
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_file = os.path.join(tmpdir, "config.json")
+        with open(config_file, "w") as f:
+            json.dump(file_content, f)
+
+        with mock.patch.dict(os.environ, env_vars, clear=False):
+            config = load_config(config_file)
+
+            # Env should override file
+            assert config["supabase"]["url"] == "https://env-project.supabase.co"
+            assert config["storage"]["backend"] == "supabase"
+
+            # File values should remain for non-overridden keys
+            assert config["supabase"]["anon_key"] == "file_anon_key"
+            assert config["storage"]["sqlite_path"] == "data/file.db"
+
+
+@pytest.mark.unit
+def test_load_config_all_storage_settings():
+    """Test loading all storage and supabase settings together."""
+    env_vars = {
+        "ALITHIA_SUPABASE_URL": "https://complete-test.supabase.co",
+        "ALITHIA_SUPABASE_ANON_KEY": "complete_anon_key",
+        "ALITHIA_SUPABASE_SERVICE_ROLE_KEY": "complete_service_key",
+        "ALITHIA_STORAGE_BACKEND": "supabase",
+        "ALITHIA_STORAGE_FALLBACK_TO_SQLITE": "yes",
+        "ALITHIA_STORAGE_SQLITE_PATH": "data/alithia.db",
+        "ALITHIA_STORAGE_USER_ID": "test_user_id",
+    }
+
+    with mock.patch.dict(os.environ, env_vars, clear=False):
+        config = _build_config_from_envs()
+
+        # Check all Supabase settings
+        assert config["supabase"]["url"] == "https://complete-test.supabase.co"
+        assert config["supabase"]["anon_key"] == "complete_anon_key"
+        assert config["supabase"]["service_role_key"] == "complete_service_key"
+
+        # Check all storage settings
+        assert config["storage"]["backend"] == "supabase"
+        assert config["storage"]["fallback_to_sqlite"] is True
+        assert config["storage"]["sqlite_path"] == "data/alithia.db"
+        assert config["storage"]["user_id"] == "test_user_id"

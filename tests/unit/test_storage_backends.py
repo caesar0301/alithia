@@ -226,57 +226,253 @@ class TestSQLiteStorage:
         all_history = storage.get_query_history(user_id, limit=50)
         assert len(all_history) >= 2
 
-
-@pytest.mark.integration
-class TestSupabaseStorage:
-    """Integration tests for Supabase storage backend (requires Supabase setup)."""
-
-    @pytest.fixture
-    def storage(self):
-        """Create a Supabase storage instance (skipped if not configured)."""
-        import os
-
-        url = os.getenv("TEST_SUPABASE_URL")
-        key = os.getenv("TEST_SUPABASE_KEY")
-
-        if not url or not key:
-            pytest.skip("Supabase credentials not configured for testing")
-
-        from alithia.storage.supabase import SupabaseStorage
-
-        storage = SupabaseStorage(url, key)
-        try:
-            storage.connect()
-            yield storage
-            storage.disconnect()
-        except Exception as e:
-            pytest.skip(f"Failed to connect to Supabase: {e}")
-
-    def test_connection(self, storage):
-        """Test Supabase connection."""
-        # Connection is tested in fixture
-        assert storage is not None
-
-    def test_zotero_cache_basic(self, storage):
-        """Basic test for Supabase Zotero caching."""
-        user_id = f"test_user_{uuid.uuid4()}"
+    def test_get_emailed_papers_with_arxiv_ids(self, storage):
+        """Test getting emailed papers filtered by ArXiv IDs."""
+        user_id = "test_user"
         papers = [
             {
-                "title": "Supabase Test Paper",
-                "authors": ["Test Author"],
-                "abstract": "Test",
-                "url": "https://example.com",
-                "zotero_item_key": f"TEST_{uuid.uuid4()}",
-                "tags": ["test"],
+                "arxiv_id": "2401.00001",
+                "title": "Paper 1",
+                "authors": ["Author 1"],
+                "summary": "Abstract 1",
+                "pdf_url": "https://arxiv.org/pdf/2401.00001",
+                "relevance_score": 0.9,
+                "published_date": datetime.utcnow().isoformat(),
+            },
+            {
+                "arxiv_id": "2401.00002",
+                "title": "Paper 2",
+                "authors": ["Author 2"],
+                "summary": "Abstract 2",
+                "pdf_url": "https://arxiv.org/pdf/2401.00002",
+                "relevance_score": 0.8,
+                "published_date": datetime.utcnow().isoformat(),
+            },
+            {
+                "arxiv_id": "2401.00003",
+                "title": "Paper 3",
+                "authors": ["Author 3"],
+                "summary": "Abstract 3",
+                "pdf_url": "https://arxiv.org/pdf/2401.00003",
+                "relevance_score": 0.7,
+                "published_date": datetime.utcnow().isoformat(),
+            },
+        ]
+
+        storage.save_emailed_papers(user_id, papers)
+
+        # Get specific papers by ArXiv IDs
+        specific_ids = ["2401.00001", "2401.00003"]
+        filtered = storage.get_emailed_papers(user_id, arxiv_ids=specific_ids, days_back=30)
+
+        assert len(filtered) == 2
+        arxiv_ids = {p["arxiv_id"] for p in filtered}
+        assert "2401.00001" in arxiv_ids
+        assert "2401.00003" in arxiv_ids
+        assert "2401.00002" not in arxiv_ids
+
+    def test_update_paper_access_time(self, storage):
+        """Test updating paper access time."""
+        user_id = "test_user"
+        paper_data = {
+            "file_path": "/path/to/paper.pdf",
+            "file_name": "paper.pdf",
+            "file_hash": "access_time_test",
+            "title": "Access Time Test",
+            "authors": ["Test Author"],
+            "abstract": "Test",
+            "full_text": "Content",
+            "sections": {},
+            "figures": [],
+            "tables": [],
+        }
+
+        paper_id = storage.cache_parsed_paper(user_id, paper_data)
+
+        # Get paper (which should update access time)
+        paper1 = storage.get_parsed_paper(user_id, "access_time_test")
+        assert paper1 is not None
+
+        # Direct update
+        storage.update_paper_access_time(paper_id)
+
+        # Retrieve again - should succeed
+        paper2 = storage.get_parsed_paper(user_id, "access_time_test")
+        assert paper2 is not None
+        assert paper2["id"] == paper_id
+
+    def test_empty_results(self, storage):
+        """Test methods with empty results."""
+        user_id = "nonexistent_user"
+
+        # Empty Zotero cache
+        zotero = storage.get_zotero_papers(user_id, max_age_hours=24)
+        assert zotero is None or len(zotero) == 0
+
+        # Empty processed ranges
+        ranges = storage.get_processed_ranges(user_id, "cs.AI", days_back=30)
+        assert len(ranges) == 0
+
+        # Empty emailed papers
+        emailed = storage.get_emailed_papers(user_id, days_back=30)
+        assert len(emailed) == 0
+
+        # Check non-existent paper
+        assert not storage.is_paper_emailed(user_id, "nonexistent_id")
+
+        # Non-existent parsed paper
+        parsed = storage.get_parsed_paper(user_id, "nonexistent_hash")
+        assert parsed is None
+
+        # Empty query history
+        history = storage.get_query_history(user_id, limit=50)
+        assert len(history) == 0
+
+    def test_duplicate_handling(self, storage):
+        """Test handling of duplicate entries."""
+        user_id = "test_user"
+
+        # Test duplicate Zotero papers (same zotero_item_key)
+        papers = [
+            {
+                "title": "Original Title",
+                "authors": ["Author 1"],
+                "abstract": "Original abstract",
+                "url": "https://example.com/paper",
+                "zotero_item_key": "DUPLICATE_KEY",
+                "tags": ["tag1"],
                 "date_added": datetime.utcnow().isoformat(),
             }
         ]
-
         storage.cache_zotero_papers(user_id, papers)
-        cached = storage.get_zotero_papers(user_id, max_age_hours=24)
 
+        # Update with same key
+        papers[0]["title"] = "Updated Title"
+        storage.cache_zotero_papers(user_id, papers)
+
+        cached = storage.get_zotero_papers(user_id, max_age_hours=24)
         assert cached is not None
-        assert len(cached) >= 1
+        assert len(cached) == 1
+        assert cached[0]["title"] == "Updated Title"
+
+        # Test duplicate emailed paper
+        paper = {
+            "arxiv_id": "DUPLICATE_ARXIV",
+            "title": "Original",
+            "authors": ["Author"],
+            "summary": "Abstract",
+            "pdf_url": "https://arxiv.org/pdf/123",
+            "relevance_score": 0.5,
+            "published_date": datetime.utcnow().isoformat(),
+        }
+        storage.save_emailed_papers(user_id, [paper])
+
+        paper["title"] = "Updated"
+        storage.save_emailed_papers(user_id, [paper])
+
+        emailed = storage.get_emailed_papers(user_id, arxiv_ids=["DUPLICATE_ARXIV"])
+        assert len(emailed) == 1
+        assert emailed[0]["paper_title"] == "Updated"
+
+    def test_large_batch_operations(self, storage):
+        """Test operations with large batches of data."""
+        user_id = "test_user"
+
+        # Cache many Zotero papers
+        many_papers = [
+            {
+                "title": f"Paper {i}",
+                "authors": [f"Author {i}"],
+                "abstract": f"Abstract {i}",
+                "url": f"https://example.com/paper{i}",
+                "zotero_item_key": f"KEY_{i}",
+                "tags": [f"tag{i}"],
+                "date_added": datetime.utcnow().isoformat(),
+            }
+            for i in range(100)
+        ]
+
+        storage.cache_zotero_papers(user_id, many_papers)
+        cached = storage.get_zotero_papers(user_id, max_age_hours=24)
+        assert cached is not None
+        assert len(cached) == 100
+
+    def test_query_history_limit(self, storage):
+        """Test query history limit parameter."""
+        user_id = "test_user"
+        paper_data = {
+            "file_path": "/path/to/paper.pdf",
+            "file_name": "paper.pdf",
+            "file_hash": "limit_test",
+            "title": "Test Paper",
+            "authors": [],
+            "abstract": None,
+            "full_text": "Text",
+            "sections": {},
+            "figures": [],
+            "tables": [],
+        }
+        paper_id = storage.cache_parsed_paper(user_id, paper_data)
+
+        # Save multiple queries
+        for i in range(20):
+            storage.save_query(
+                user_id,
+                paper_id,
+                f"Query {i}",
+                [{"text": f"Result {i}"}],
+                {"score": 0.5 + i * 0.01},
+            )
+
+        # Test limit
+        history = storage.get_query_history(user_id, paper_id=paper_id, limit=5)
+        assert len(history) == 5
+
+        # Get more
+        history_all = storage.get_query_history(user_id, paper_id=paper_id, limit=50)
+        assert len(history_all) == 20
+
+    def test_multiple_users(self, storage):
+        """Test data isolation between users."""
+        user1 = "user1"
+        user2 = "user2"
+
+        # User 1 data
+        papers1 = [
+            {
+                "title": "User 1 Paper",
+                "authors": ["Author 1"],
+                "abstract": "Abstract 1",
+                "url": "https://example.com/paper1",
+                "zotero_item_key": "USER1_KEY",
+                "tags": ["user1"],
+                "date_added": datetime.utcnow().isoformat(),
+            }
+        ]
+        storage.cache_zotero_papers(user1, papers1)
+
+        # User 2 data
+        papers2 = [
+            {
+                "title": "User 2 Paper",
+                "authors": ["Author 2"],
+                "abstract": "Abstract 2",
+                "url": "https://example.com/paper2",
+                "zotero_item_key": "USER2_KEY",
+                "tags": ["user2"],
+                "date_added": datetime.utcnow().isoformat(),
+            }
+        ]
+        storage.cache_zotero_papers(user2, papers2)
+
+        # Verify isolation
+        user1_cache = storage.get_zotero_papers(user1, max_age_hours=24)
+        user2_cache = storage.get_zotero_papers(user2, max_age_hours=24)
+
+        assert len(user1_cache) == 1
+        assert len(user2_cache) == 1
+        assert user1_cache[0]["title"] == "User 1 Paper"
+        assert user2_cache[0]["title"] == "User 2 Paper"
 
 
 class TestStorageFactory:

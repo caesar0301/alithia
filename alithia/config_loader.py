@@ -110,6 +110,15 @@ def _build_config_from_envs() -> Dict[str, Any]:
         "email_notification.sender": "ALITHIA_SENDER",
         "email_notification.sender_password": "ALITHIA_SENDER_PASSWORD",
         "email_notification.receiver": "ALITHIA_RECEIVER",
+        # Supabase settings
+        "supabase.url": "ALITHIA_SUPABASE_URL",
+        "supabase.anon_key": "ALITHIA_SUPABASE_ANON_KEY",
+        "supabase.service_role_key": "ALITHIA_SUPABASE_SERVICE_ROLE_KEY",
+        # Storage settings
+        "storage.backend": "ALITHIA_STORAGE_BACKEND",
+        "storage.fallback_to_sqlite": "ALITHIA_STORAGE_FALLBACK_TO_SQLITE",
+        "storage.sqlite_path": "ALITHIA_STORAGE_SQLITE_PATH",
+        "storage.user_id": "ALITHIA_STORAGE_USER_ID",
         # PaperScout agent settings
         "paperscout_agent.query": "ALITHIA_ARXIV_QUERY",
         "paperscout_agent.max_papers": "ALITHIA_MAX_PAPER_NUM",
@@ -126,7 +135,7 @@ def _build_config_from_envs() -> Dict[str, Any]:
                     value = int(value)
                 except ValueError:
                     continue
-            elif config_key in ["paperscout_agent.send_empty", "debug"]:
+            elif config_key in ["paperscout_agent.send_empty", "storage.fallback_to_sqlite", "debug"]:
                 value = str(value).lower() in ["true", "1", "yes"]
             elif config_key == "paperscout_agent.ignore_patterns" and value:
                 # Convert comma-separated string to list
