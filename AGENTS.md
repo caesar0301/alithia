@@ -18,7 +18,7 @@ Alithia is a **multi-agent, AI-powered research companion** designed to cover th
 
 The project currently implements two main agents:
 
-1. **AlithiaArxrec** - Personalized ArXiv Recommendation Agent ✅ **Implemented**
+1. **AlithiaPaperScout** - Personalized ArXiv Recommendation Agent ✅ **Implemented**
 2. **AlithiaLens** - Deep Paper Interaction Agent (PaperLens) ✅ **Implemented**
 
 **Planned Agents:**
@@ -27,7 +27,7 @@ The project currently implements two main agents:
 ## Current Implementation Status
 
 ### ✅ **Available Now**
-- **AlithiaArxrec**: Fully functional ArXiv recommendation system
+- **AlithiaPaperScout**: Fully functional ArXiv recommendation system
 - **AlithiaLens**: Complete PDF analysis and semantic search tool
 - **Core Infrastructure**: Configuration, researcher profiles, utilities
 - **Testing Suite**: Comprehensive unit and integration tests
@@ -48,7 +48,7 @@ alithia/
 │       └── profile.py       # Researcher profile models
 ├── run/                    # Main entrypoint
 │   └── __main__.py         # CLI: python -m alithia.run
-├── arxrec/                  # AlithiaArxrec agent ✅ IMPLEMENTED
+├── paperscout/                  # AlithiaPaperScout agent ✅ IMPLEMENTED
 │   ├── agent.py            # Main agent logic
 │   ├── arxiv_paper.py      # ArXiv paper data models
 │   ├── email_utils.py      # Email functionality
@@ -123,7 +123,7 @@ The project uses a JSON configuration system. Key configuration areas:
     "username": "your_email@gmail.com",
     "password": "your_app_password"
   },
-  "arxrec": {
+  "paperscout": {
     "query": "cs.AI+cs.CV+cs.LG+cs.CL",
     "max_papers": 50,
     "send_empty": false
@@ -140,7 +140,7 @@ Use `alithia.config_loader.load_config()` to load configuration from:
 
 ## Agent Workflows
 
-### AlithiaArxrec Workflow ✅ **Implemented**
+### AlithiaPaperScout Workflow ✅ **Implemented**
 
 1. **Profile Analysis**: Extract research interests from Zotero library
 2. **Data Collection**: Fetch papers from ArXiv RSS feed
@@ -148,7 +148,7 @@ Use `alithia.config_loader.load_config()` to load configuration from:
 4. **Content Generation**: Generate TLDR summaries using LLM
 5. **Communication**: Send email with recommendations
 
-**CLI Usage**: `python -m alithia.run arxrec_agent [-c CONFIG]`
+**CLI Usage**: `python -m alithia.run paperscout_agent [-c CONFIG]`
 
 ### AlithiaLens Workflow ✅ **Implemented**
 
@@ -263,8 +263,8 @@ The project uses GitHub Actions for automated deployment:
 uv sync
 
 # Run ArXiv agent (requires configuration)
-uv run python -m alithia.run arxrec_agent
-uv run python -m alithia.run arxrec_agent --config config.json
+uv run python -m alithia.run paperscout_agent
+uv run python -m alithia.run paperscout_agent --config config.json
 
 # Run PaperLens (requires input file and PDF directory)
 uv run python -m alithia.run paperlens_agent -i topic.txt -d ./papers
@@ -316,7 +316,7 @@ Enable debug logging by setting `debug: true` in configuration or using `-v` fla
 
 ### Currently Implemented ✅
 
-- **AlithiaArxrec**: Personalized ArXiv recommendation agent
+- **AlithiaPaperScout**: Personalized ArXiv recommendation agent
 - **AlithiaLens**: Deep paper interaction and analysis agent
 - **IBM Granite VLM**: Optimized PDF parsing with multimodal understanding
 - **LangGraph Integration**: Agent workflow orchestration

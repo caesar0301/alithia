@@ -42,7 +42,7 @@ uv run python -m examples.flashrank_demo
 ```
 
 This comprehensive example demonstrates:
-- Complete reranking pipeline as used in `alithia/arxrec/recommender.py`
+- Complete reranking pipeline as used in `alithia/paperscout/recommender.py`
 - Time-decay weighting for recent papers
 - Scoring multiple candidate papers against a corpus
 - Detailed relevance analysis
@@ -76,7 +76,7 @@ When new papers appear on arXiv, we need to determine which ones are most releva
 
 The production implementation is in:
 ```
-alithia/arxrec/recommender.py → rerank_papers()
+alithia/paperscout/recommender.py → rerank_papers()
 ```
 
 Key parameters:

@@ -110,25 +110,25 @@ def _build_config_from_envs() -> Dict[str, Any]:
         "email_notification.sender": "ALITHIA_SENDER",
         "email_notification.sender_password": "ALITHIA_SENDER_PASSWORD",
         "email_notification.receiver": "ALITHIA_RECEIVER",
-        # Arxrec specific settings
-        "arxrec.query": "ALITHIA_ARXIV_QUERY",
-        "arxrec.max_papers": "ALITHIA_MAX_PAPER_NUM",
-        "arxrec.send_empty": "ALITHIA_SEND_EMPTY",
-        "arxrec.ignore_patterns": "ALITHIA_ZOTERO_IGNORE",
+        # PaperScout agent settings
+        "paperscout_agent.query": "ALITHIA_ARXIV_QUERY",
+        "paperscout_agent.max_papers": "ALITHIA_MAX_PAPER_NUM",
+        "paperscout_agent.send_empty": "ALITHIA_SEND_EMPTY",
+        "paperscout_agent.ignore_patterns": "ALITHIA_ZOTERO_IGNORE",
     }
 
     for config_key, env_key in env_mapping.items():
         value = get_env(env_key)
         if value is not None:
             # Convert string values to appropriate types
-            if config_key in ["email_notification.smtp_port", "arxrec.max_papers"]:
+            if config_key in ["email_notification.smtp_port", "paperscout_agent.max_papers"]:
                 try:
                     value = int(value)
                 except ValueError:
                     continue
-            elif config_key in ["arxrec.send_empty", "debug"]:
+            elif config_key in ["paperscout_agent.send_empty", "debug"]:
                 value = str(value).lower() in ["true", "1", "yes"]
-            elif config_key == "arxrec.ignore_patterns" and value:
+            elif config_key == "paperscout_agent.ignore_patterns" and value:
                 # Convert comma-separated string to list
                 value = [pattern.strip() for pattern in value.split(",") if pattern.strip()]
             elif config_key == "research_interests" and value:

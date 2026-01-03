@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # Manual trigger only for testing
 
 jobs:
-  test-arxrec-agent:
+  test-paperscout-agent:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,20 +22,20 @@ jobs:
     - name: Install dependencies
       run: uv sync --extra default
 
-    - name: Run ArXiv Research Agent (Debug Mode)
+    - name: Run PaperScout Agent (Debug Mode)
       env:
         ALITHIA_CONFIG_JSON: ${{ secrets.ALITHIA_CONFIG_JSON }}
       run: |
-        echo "$ALITHIA_CONFIG_JSON" > arxrec_config_test.json
+        echo "$ALITHIA_CONFIG_JSON" > paperscout_config_test.json
         # Modify config to enable debug mode
         python -c "
         import json
-        with open('arxrec_config_test.json', 'r') as f:
+        with open('paperscout_config_test.json', 'r') as f:
             config = json.load(f)
         config['debug'] = True
         config['max_paper_num'] = 3  # Limit papers for testing
-        with open('arxrec_config_test.json', 'w') as f:
+        with open('paperscout_config_test.json', 'w') as f:
             json.dump(config, f, indent=2)
         "
-        uv run python -m alithia.run arxrec_agent --config arxrec_config_test.json
-        rm -rf arxrec_config_test.json
+        uv run python -m alithia.run paperscout_agent --config paperscout_config_test.json
+        rm -rf paperscout_config_test.json

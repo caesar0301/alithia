@@ -34,11 +34,27 @@
     "gems": {
         "Hunt topic": "your interests topics"
     },
-    "arxrec": {
+    "paperscout_agent": {
         "query": "cs.AI+cs.CV+cs.LG+cs.CL",
         "max_papers": 50,
         "send_empty": false,
         "ignore_patterns": []
+    },
+    "paperlens_agent": {
+        "sbert_model": "all-MiniLM-L6-v2",
+        "force_gpu": false,
+        "top_n": 10
+    },
+    "supabase": {
+        "url": "https://your-project.supabase.co",
+        "anon_key": "your_supabase_anon_key",
+        "service_role_key": "your_supabase_service_role_key"
+    },
+    "storage": {
+        "backend": "supabase",
+        "fallback_to_sqlite": true,
+        "sqlite_path": "data/alithia.db",
+        "user_id": "default_user"
     },
     "debug": false
 }

@@ -14,7 +14,7 @@ env:
   FORCE_RUN: true
 
 jobs:
-  run-arxrec-agent:
+  run-paperscout-agent:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -33,7 +33,7 @@ jobs:
     - name: Install dependencies
       run: uv sync --extra default
 
-    - name: Run ArXiv Research Agent
+    - name: Run PaperScout Agent
       env:
         ALITHIA_CONFIG_JSON: ${{ secrets.ALITHIA_CONFIG_JSON }}
       run: |
@@ -41,15 +41,15 @@ jobs:
           echo "❌ Error: ALITHIA_CONFIG_JSON secret is not set"
           exit 1
         fi
-        echo "$ALITHIA_CONFIG_JSON" > arxrec_config.json
-        uv run python -m alithia.run arxrec_agent --config arxrec_config.json
-        rm -rf arxrec_config.json
+        echo "$ALITHIA_CONFIG_JSON" > paperscout_config.json
+        uv run python -m alithia.run paperscout_agent --config paperscout_config.json
+        rm -rf paperscout_config.json
 
     - name: Upload logs on failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: arxrec-logs-${{ github.run_id }}
+        name: paperscout-logs-${{ github.run_id }}
         path: |
           *.log
         retention-days: 3

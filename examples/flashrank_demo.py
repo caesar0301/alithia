@@ -1,6 +1,6 @@
 """FlashRank reranking demo: paper relevance scoring with time-decay weighting.
 
-Mirrors the approach in alithia/arxrec/recommender.py
+Mirrors the approach in alithia/paperscout/recommender.py
 """
 
 from datetime import datetime, timedelta
@@ -86,7 +86,7 @@ def create_candidate_papers() -> List[Dict[str, str]]:
 def rerank_with_flashrank(
     candidate_papers: List[Dict[str, str]], corpus: List[Dict[str, any]], model_name: str = "ms-marco-MiniLM-L-12-v2"
 ) -> List[Dict[str, any]]:
-    """Rerank papers by corpus relevance (mirrors alithia/arxrec/recommender.py).
+    """Rerank papers by corpus relevance (mirrors alithia/paperscout/recommender.py).
 
     Args:
         candidate_papers: Papers to rank

@@ -200,16 +200,8 @@ class ArxivPaperFetcher:
         if from_time and to_time:
             result = self._fetch_with_api_search(arxiv_query, from_time, to_time, max_results)
             if result.success:
-                if len(result.papers) > 0:
-                    # API search succeeded and found papers
-                    result.elapsed_time = time.time() - start_time
-                    return result
-                else:
-                    # API search succeeded but returned 0 papers - fallback to RSS
-                    logger.warning(
-                        f"API search returned 0 papers for date range {from_time} to {to_time}. "
-                        f"Falling back to RSS feed which may have recent papers."
-                    )
+                result.elapsed_time = time.time() - start_time
+                return result
             else:
                 logger.warning(f"API search failed: {result.error_message}")
 

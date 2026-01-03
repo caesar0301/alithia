@@ -178,9 +178,9 @@ def test_build_config_from_envs_integer_conversion():
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
         assert config["email_notification"]["smtp_port"] == 587
-        assert config["arxrec"]["max_papers"] == 50
+        assert config["paperscout_agent"]["max_papers"] == 50
         assert isinstance(config["email_notification"]["smtp_port"], int)
-        assert isinstance(config["arxrec"]["max_papers"], int)
+        assert isinstance(config["paperscout_agent"]["max_papers"], int)
 
 
 @pytest.mark.unit
@@ -201,7 +201,7 @@ def test_build_config_from_envs_boolean_conversion():
         env_vars = {"ALITHIA_SEND_EMPTY": env_value}
         with mock.patch.dict(os.environ, env_vars, clear=False):
             config = _build_config_from_envs()
-            assert config["arxrec"]["send_empty"] is expected
+            assert config["paperscout_agent"]["send_empty"] is expected
 
 
 @pytest.mark.unit
@@ -213,7 +213,7 @@ def test_build_config_from_envs_ignore_patterns():
 
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
-        assert config["arxrec"]["ignore_patterns"] == ["pattern1", "pattern2", "pattern3"]
+        assert config["paperscout_agent"]["ignore_patterns"] == ["pattern1", "pattern2", "pattern3"]
 
 
 @pytest.mark.unit
@@ -463,10 +463,10 @@ def test_load_config_general_settings():
 
 
 @pytest.mark.unit
-def test_load_config_arxrec_settings():
-    """Test loading arxrec-specific settings."""
+def test_load_config_paperscout_settings():
+    """Test loading paperscout-specific settings."""
     config_data = {
-        "arxrec": {
+        "paperscout_agent": {
             "query": "cs.AI+cs.CV",
             "max_papers": 50,
             "send_empty": False,
@@ -489,10 +489,11 @@ def test_load_config_arxrec_settings():
         with mock.patch.dict(os.environ, env_vars, clear=False):
             config = load_config(temp_path)
 
-            assert config["arxrec"]["query"] == "cs.LG"
-            assert config["arxrec"]["max_papers"] == 100
-            assert config["arxrec"]["send_empty"] is True
-            assert config["arxrec"]["ignore_patterns"] == ["ignore1", "ignore2"]
+            # Environment variables should override file config
+            assert config["paperscout_agent"]["query"] == "cs.LG"
+            assert config["paperscout_agent"]["max_papers"] == 100
+            assert config["paperscout_agent"]["send_empty"] is True
+            assert config["paperscout_agent"]["ignore_patterns"] == ["ignore1", "ignore2"]
     finally:
         os.unlink(temp_path)
 
@@ -511,7 +512,7 @@ def test_load_config_with_whitespace_in_lists():
 
             # Whitespace should be stripped
             assert config["research_interests"] == ["AI", "Machine Learning", "Computer Vision"]
-            assert config["arxrec"]["ignore_patterns"] == ["pattern1", "pattern2"]
+            assert config["paperscout_agent"]["ignore_patterns"] == ["pattern1", "pattern2"]
 
 
 @pytest.mark.unit
@@ -530,4 +531,4 @@ def test_load_config_empty_list_handling():
             assert "research_interests" not in config
 
             # Whitespace-only patterns should result in empty list
-            assert config["arxrec"]["ignore_patterns"] == []
+            assert config["paperscout_agent"]["ignore_patterns"] == []

@@ -29,7 +29,7 @@ help: ## Show this help message
 
 install: ## Install development dependencies
 	@echo "$(BLUE)🔧 Installing development dependencies...$(RESET)"
-	@uv sync --extra dev
+	@uv sync --extra defualt,dev
 
 setup: install ## Setup development environment
 	@echo "$(GREEN)✅ Development environment ready$(RESET)"
@@ -139,6 +139,31 @@ clean: ## Clean Python cache and build artifacts
 
 clean-all: clean ## Clean everything including dependencies
 	@echo "$(GREEN)✅ Complete cleanup finished!$(RESET)"
+
+# =============================================================================
+# EXAMPLE COMMANDS
+# =============================================================================
+
+.PHONY: examples run-examples example-arxiv example-flashrank example-diagnose example-docling
+
+examples: run-examples ## Run all examples (alias)
+
+run-examples: ## Run all runnable examples
+	@echo "$(BLUE)📚 Running examples...$(RESET)"
+	@echo ""
+	@echo "$(GREEN)▶ Running ArXiv Search Example...$(RESET)"
+	@uv run python examples/arxiv_search_example.py || true
+	@echo ""
+	@echo "$(GREEN)▶ Running FlashRank Demo...$(RESET)"
+	@uv run python examples/flashrank_demo.py || true
+	@echo ""
+	@echo "$(GREEN)▶ Running Yesterday Papers Diagnostic...$(RESET)"
+	@uv run python examples/diagnose_yesterday_papers.py || true
+	@echo ""
+	@echo "$(BLUE)💡 Note: docling_ocr_example.py requires a PDF file argument$(RESET)"
+	@echo "   Run with: make example-docling PDF=path/to/paper.pdf"
+	@echo ""
+	@echo "$(GREEN)✅ All examples completed!$(RESET)"
 
 # =============================================================================
 # UTILITY COMMANDS
