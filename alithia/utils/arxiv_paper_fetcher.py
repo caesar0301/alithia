@@ -27,6 +27,7 @@ Features:
 import logging
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -322,23 +323,78 @@ class ArxivPaperFetcher:
                                 if hasattr(most_recent, "published") and most_recent.published
                                 else "unknown"
                             )
+                            
+                            # Extract all dates from test papers
+                            paper_dates = []
+                            for p in test_papers:
+                                if hasattr(p, "published") and p.published:
+                                    paper_dates.append(p.published.strftime("%Y%m%d"))
+                            
+                            query_date = from_time[:8]
+                            
+                            # Determine the issue
+                            if recent_date != "unknown":
+                                try:
+                                    query_dt = datetime.strptime(query_date, "%Y%m%d")
+                                    recent_dt = datetime.strptime(recent_date, "%Y%m%d")
+                                    days_diff = (query_dt - recent_dt).days
+                                    
+                                    if days_diff > 0:
+                                        logger.warning(
+                                            f"Query date {query_date} is {days_diff} day(s) AFTER the most recent paper ({recent_date}). "
+                                            f"This suggests: (1) ArXiv API indexing delay - papers from {query_date} may not be indexed yet, "
+                                            f"or (2) No papers were submitted on {query_date}."
+                                        )
+                                    elif days_diff == 0:
+                                        logger.warning(
+                                            f"Query date {query_date} matches most recent paper date, but date-filtered query returned 0. "
+                                            f"This suggests a date format or query syntax issue with submittedDate field."
+                                        )
+                                    else:
+                                        logger.info(
+                                            f"Query date {query_date} is before most recent paper ({recent_date}). "
+                                            f"Date range query should work - investigating further..."
+                                        )
+                                except ValueError:
+                                    pass
+                            
                             logger.info(
                                 f"Category query test (without date filter) returned {len(test_papers)} papers, "
                                 f"confirming categories are valid. Most recent paper date: {recent_date}. "
-                                f"The issue is likely: (1) ArXiv API indexing delay (papers may not appear immediately), "
-                                f"(2) No papers submitted on {from_time[:8]}, or (3) Date format/query syntax issue."
+                                f"Query date: {query_date}."
                             )
-                            # Log a few recent paper dates for comparison
-                            if len(test_papers) >= 3:
-                                dates = [
-                                    (
-                                        p.published.strftime("%Y%m%d")
-                                        if hasattr(p, "published") and p.published
-                                        else "unknown"
-                                    )
-                                    for p in test_papers[:3]
-                                ]
-                                logger.debug(f"Recent paper submission dates (for comparison): {', '.join(dates)}")
+                            # Log date distribution from test papers
+                            if paper_dates:
+                                unique_dates = sorted(set(paper_dates), reverse=True)[:5]
+                                logger.info(
+                                    f"Available paper dates in test query (most recent first): {', '.join(unique_dates)}"
+                                )
+                                
+                                # Test if date format works by querying the most recent date
+                                if recent_date != "unknown" and recent_date != query_date:
+                                    try:
+                                        test_date_query = build_arxiv_search_query(
+                                            arxiv_query, f"{recent_date}0000", f"{recent_date}2359"
+                                        )
+                                        test_date_search = arxiv.Search(
+                                            query=test_date_query,
+                                            sort_by=arxiv.SortCriterion.SubmittedDate,
+                                            sort_order=arxiv.SortOrder.Descending,
+                                            max_results=5,
+                                        )
+                                        test_date_count = sum(1 for _ in self.arxiv_client.results(test_date_search))
+                                        if test_date_count > 0:
+                                            logger.info(
+                                                f"Date format verification: Query for {recent_date} (known date with papers) "
+                                                f"returned {test_date_count} papers, confirming date format is correct."
+                                            )
+                                        else:
+                                            logger.warning(
+                                                f"Date format verification: Query for {recent_date} (known date with papers) "
+                                                f"returned 0 papers - date format may be incorrect!"
+                                            )
+                                    except Exception as e:
+                                        logger.debug(f"Could not run date format verification: {e}")
                         else:
                             logger.warning("Category query test also returned 0 papers - categories may be invalid")
                     except Exception as e:
