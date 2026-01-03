@@ -108,7 +108,6 @@ def _build_config_from_envs() -> Dict[str, Any]:
         "researcher_profile.email_notification.smtp_port": "ALITHIA_SMTP_PORT",
         "researcher_profile.email_notification.sender": "ALITHIA_SENDER",
         "researcher_profile.email_notification.sender_password": "ALITHIA_SENDER_PASSWORD",
-        "researcher_profile.email_notification.receiver": "ALITHIA_RECEIVER",
         # Supabase settings
         "supabase.url": "ALITHIA_SUPABASE_URL",
         "supabase.anon_key": "ALITHIA_SUPABASE_ANON_KEY",
@@ -139,10 +138,8 @@ def _build_config_from_envs() -> Dict[str, Any]:
             elif config_key in ["paperscout_agent.send_empty", "storage.fallback_to_sqlite", "debug"]:
                 value = str(value).lower() in ["true", "1", "yes"]
             elif config_key == "paperscout_agent.ignore_patterns" and value:
-                # Convert comma-separated string to list
                 value = [pattern.strip() for pattern in value.split(",") if pattern.strip()]
             elif config_key == "researcher_profile.research_interests" and value:
-                # Convert comma-separated string to list
                 value = [interest.strip() for interest in value.split(",") if interest.strip()]
 
             # Set nested value

@@ -16,9 +16,8 @@
         "email_notification": {
             "smtp_server": "smtp.example.com",
             "smtp_port": 587,
-            "sender": "your_email@example.com",
-            "sender_password": "your_password",
-            "receiver": "your_email@example.com"
+            "sender": "noreply@example.com",
+            "sender_password": "your_smtp_password"
         },
         "github": {
             "github_username": "your_github_username",

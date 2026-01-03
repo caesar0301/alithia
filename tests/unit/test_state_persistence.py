@@ -24,7 +24,6 @@ def sample_config():
             smtp_server="smtp.test.com",
             smtp_port=587,
             sender="sender@test.com",
-            receiver="receiver@test.com",
             sender_password="password",
         ),
         llm=LLMConnection(

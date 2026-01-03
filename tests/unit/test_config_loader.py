@@ -267,20 +267,22 @@ def test_build_config_from_envs_all_zotero_settings():
 def test_build_config_from_envs_all_email_notification_settings():
     """Test building all email notification settings from environment."""
     env_vars = {
+        "ALITHIA_EMAIL": "user@example.com",
         "ALITHIA_SMTP_SERVER": "smtp.example.com",
         "ALITHIA_SMTP_PORT": "587",
         "ALITHIA_SENDER": "sender@example.com",
         "ALITHIA_SENDER_PASSWORD": "password",
-        "ALITHIA_RECEIVER": "receiver@example.com",
     }
 
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
+        assert config["researcher_profile"]["email"] == "user@example.com"
         assert config["researcher_profile"]["email_notification"]["smtp_server"] == "smtp.example.com"
         assert config["researcher_profile"]["email_notification"]["smtp_port"] == 587
         assert config["researcher_profile"]["email_notification"]["sender"] == "sender@example.com"
         assert config["researcher_profile"]["email_notification"]["sender_password"] == "password"
-        assert config["researcher_profile"]["email_notification"]["receiver"] == "receiver@example.com"
+        # Receiver is now the same as researcher email, not in email_notification
+        assert "receiver" not in config["researcher_profile"]["email_notification"]
 
 
 @pytest.mark.unit

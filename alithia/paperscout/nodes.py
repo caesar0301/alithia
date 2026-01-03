@@ -56,8 +56,8 @@ def _validate_user_profile(user_profile: ResearcherProfile) -> List[str]:
         errors.append("SMTP server is required")
     if not user_profile.email_notification.sender:
         errors.append("Sender email is required")
-    if not user_profile.email_notification.receiver:
-        errors.append("Receiver email is required")
+    if not user_profile.email:
+        errors.append("Researcher email is required for notifications")
     if not user_profile.llm.openai_api_key:
         errors.append("OpenAI API key is required when using LLM API")
 
@@ -350,7 +350,7 @@ def communication_node(state: AgentState) -> dict:
         # Send email
         success = send_email(
             sender=state.config.user_profile.email_notification.sender,
-            receiver=state.config.user_profile.email_notification.receiver,
+            receiver=state.config.user_profile.email,
             password=state.config.user_profile.email_notification.sender_password,
             smtp_server=state.config.user_profile.email_notification.smtp_server,
             smtp_port=state.config.user_profile.email_notification.smtp_port,
