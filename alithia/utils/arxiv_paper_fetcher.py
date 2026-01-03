@@ -297,8 +297,7 @@ class ArxivPaperFetcher:
                 if result_count == 0:
                     logger.warning(
                         f"ArXiv API returned 0 results for query: {full_query}. "
-                        f"This might indicate: (1) No papers submitted on {from_time[:8]}, "
-                        f"(2) Date format issue, or (3) Query syntax issue."
+                        f"Date range: {from_time[:8]} (format: YYYYMMDDHHMM)"
                     )
                     # Test query without date filter to verify categories work
                     try:
@@ -307,14 +306,39 @@ class ArxivPaperFetcher:
                             query=category_query,
                             sort_by=arxiv.SortCriterion.SubmittedDate,
                             sort_order=arxiv.SortOrder.Descending,
-                            max_results=5,
+                            max_results=10,
                         )
-                        test_count = sum(1 for _ in self.arxiv_client.results(test_search))
-                        if test_count > 0:
-                            logger.info(
-                                f"Category query test (without date filter) returned {test_count} papers, "
-                                f"confirming categories are valid. The issue is likely with the date range."
+                        test_papers = []
+                        for test_result in self.arxiv_client.results(test_search):
+                            test_papers.append(test_result)
+                            if len(test_papers) >= 10:
+                                break
+
+                        if len(test_papers) > 0:
+                            # Check the most recent paper's submission date
+                            most_recent = test_papers[0]
+                            recent_date = (
+                                most_recent.published.strftime("%Y%m%d")
+                                if hasattr(most_recent, "published") and most_recent.published
+                                else "unknown"
                             )
+                            logger.info(
+                                f"Category query test (without date filter) returned {len(test_papers)} papers, "
+                                f"confirming categories are valid. Most recent paper date: {recent_date}. "
+                                f"The issue is likely: (1) ArXiv API indexing delay (papers may not appear immediately), "
+                                f"(2) No papers submitted on {from_time[:8]}, or (3) Date format/query syntax issue."
+                            )
+                            # Log a few recent paper dates for comparison
+                            if len(test_papers) >= 3:
+                                dates = [
+                                    (
+                                        p.published.strftime("%Y%m%d")
+                                        if hasattr(p, "published") and p.published
+                                        else "unknown"
+                                    )
+                                    for p in test_papers[:3]
+                                ]
+                                logger.debug(f"Recent paper submission dates (for comparison): {', '.join(dates)}")
                         else:
                             logger.warning("Category query test also returned 0 papers - categories may be invalid")
                     except Exception as e:
