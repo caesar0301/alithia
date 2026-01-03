@@ -1,5 +1,14 @@
 """
 Utilities for processing and enriching ArxivPaper objects.
+
+This module provides utilities for:
+- Building ArXiv search queries
+- Extracting LaTeX content from papers
+- Generating TLDR summaries
+- Extracting author affiliations
+- Finding code repositories
+
+Note: Paper fetching functions have been moved to arxiv_paper_fetcher.py
 """
 
 import logging
@@ -10,8 +19,6 @@ from tempfile import TemporaryDirectory
 from typing import Dict, List, Optional
 from urllib.error import HTTPError
 
-import arxiv
-import feedparser
 import requests
 import tiktoken
 from cogents_core.llm import BaseLLMClient
@@ -22,190 +29,12 @@ from alithia.models import ArxivPaper
 logger = logging.getLogger(__name__)
 
 
-def _build_category_query(arxiv_query: str) -> str:
-    """
-    Build category query string from arxiv_query format.
-
-    Args:
-        arxiv_query: ArXiv query string with categories separated by '+' (e.g., "cs.AI+cs.CV+cs.LG")
-
-    Returns:
-        Formatted category query string for ArXiv API
-
-    Example:
-        >>> query = _build_category_query("cs.AI+cs.CV")
-        >>> # Returns: "cat:cs.AI OR cat:cs.CV"
-    """
-    categories = arxiv_query.split("+")
-    category_parts = [f"cat:{cat.strip()}" for cat in categories]
-
-    # For single category, return without parentheses
-    if len(category_parts) == 1:
-        return category_parts[0]
-
-    # For multiple categories, use OR logic
-    return " OR ".join(category_parts)
-
-
-def build_arxiv_search_query(arxiv_query: str, from_time: str, to_time: str) -> str:
-    """
-    Build ArXiv API search query string with categories and date range.
-
-    Args:
-        arxiv_query: ArXiv query string with categories separated by '+' (e.g., "cs.AI+cs.CV+cs.LG")
-        from_time: Start time in format YYYYMMDDHHMM (e.g., "202510250000")
-        to_time: End time in format YYYYMMDDHHMM (e.g., "202510252359")
-
-    Returns:
-        Formatted query string for ArXiv API
-
-    Example:
-        >>> query = build_arxiv_search_query("cs.AI+cs.CV", "202510250000", "202510252359")
-        >>> # Returns: "(cat:cs.AI OR cat:cs.CV) AND submittedDate:[202510250000 TO 202510252359]"
-    """
-    # Build category query using the helper function
-    category_query = _build_category_query(arxiv_query)
-
-    # Build date range query part: submittedDate:[from_time TO to_time]
-    date_query = f"submittedDate:[{from_time} TO {to_time}]"
-
-    # Combine with parentheses: (categories) AND date_range
-    return f"({category_query}) AND {date_query}"
-
-
-def get_arxiv_papers_search(
-    arxiv_query: str,
-    from_time: str,
-    to_time: str,
-    max_results: int = 200,
-    debug: bool = False,
-) -> List[ArxivPaper]:
-    """
-    Search ArXiv papers by categories and submission date range.
-
-    Args:
-        arxiv_query: ArXiv query string with categories separated by '+' (e.g., "cs.AI+cs.CV+cs.LG+cs.CL")
-        from_time: Start time in format YYYYMMDDHHMM (e.g., "202510250000")
-        to_time: End time in format YYYYMMDDHHMM (e.g., "202510252359")
-        max_results: Maximum number of results to return (default: 200)
-        debug: If True, limit to 5 papers for debugging
-
-    Returns:
-        List of ArxivPaper objects matching the search criteria
-
-    Example:
-        >>> papers = get_arxiv_papers_search(
-        ...     arxiv_query="cs.AI+cs.CV+cs.LG+cs.CL",
-        ...     from_time="202510250000",
-        ...     to_time="202510252359",
-        ...     max_results=200
-        ... )
-    
-    Note:
-        This function is kept for backward compatibility.
-        For production use, consider using the enhanced ArXiv paper fetcher
-        from alithia.utils.arxiv_paper_fetcher.fetch_arxiv_papers which includes
-        automatic fallback strategies.
-    """
-    # Build the search query using the utility function
-    full_query = build_arxiv_search_query(arxiv_query, from_time, to_time)
-
-    if debug:
-        logger.info(f"Debug mode: Using query '{full_query}' with max_results=5")
-        max_results = 5
-
-    logger.info(f"Searching ArXiv with query: {full_query}")
-
-    # Create search with proper sorting
-    client = arxiv.Client(num_retries=10, delay_seconds=10)
-    search = arxiv.Search(
-        query=full_query,
-        sort_by=arxiv.SortCriterion.SubmittedDate,
-        sort_order=arxiv.SortOrder.Descending,  # Changed to Descending for most recent first
-        max_results=max_results,
-    )
-
-    # Fetch and convert results with better error handling
-    papers = []
-    error_count = 0
-    max_errors = 10  # Stop after 10 consecutive errors
-    
-    try:
-        for result in client.results(search):
-            try:
-                paper = ArxivPaper.from_arxiv_result(result)
-                if paper is not None:
-                    papers.append(paper)
-                    error_count = 0  # Reset error count on success
-            except Exception as e:
-                error_count += 1
-                logger.warning(f"Error processing paper result: {e}")
-                if error_count >= max_errors:
-                    logger.error(f"Too many errors ({max_errors}), stopping paper retrieval")
-                    break
-                continue
-    except Exception as e:
-        logger.error(f"Error fetching papers from ArXiv: {e}")
-        # Return what we have so far instead of failing completely
-        if not papers:
-            raise
-
-    logger.info(f"Found {len(papers)} papers matching search criteria")
-    return papers
-
-
-def get_arxiv_papers_feed(arxiv_query: str, debug: bool = False) -> List[ArxivPaper]:
-    """
-    Retrieve papers from ArXiv based on query.
-
-    Args:
-        arxiv_query: ArXiv query string (e.g., "cs.AI+cs.CV")
-        debug: If True, limit to 5 papers but still use the actual query
-
-    Returns:
-        List of ArxivPaper objects
-    """
-    client = arxiv.Client(num_retries=10, delay_seconds=10)
-
-    if debug:
-        # In debug mode, use the actual query but limit to 5 papers
-        formatted_query = _build_category_query(arxiv_query)
-        logger.info(f"Debug mode: Using query '{formatted_query}'")
-        search = arxiv.Search(query=formatted_query, sort_by=arxiv.SortCriterion.SubmittedDate, max_results=5)
-        papers = []
-        for p in client.results(search):
-            paper = ArxivPaper.from_arxiv_result(p)
-            if paper is not None:
-                papers.append(paper)
-        return papers
-
-    # Fetch papers from RSS feed
-    feed = feedparser.parse(f"https://rss.arxiv.org/atom/{arxiv_query}")
-
-    if "Feed error for query" in feed.feed.get("title", ""):
-        raise ValueError(f"Invalid ARXIV_QUERY: {arxiv_query}")
-
-    # Extract paper IDs from feed
-    paper_ids = [
-        entry.id.removeprefix("oai:arXiv.org:")
-        for entry in feed.entries
-        if hasattr(entry, "arxiv_announce_type") and entry.arxiv_announce_type == "new"
-    ]
-
-    if not paper_ids:
-        return []
-
-    # Fetch paper details in batches
-    papers = []
-    batch_size = 50
-
-    for i in range(0, len(paper_ids), batch_size):
-        batch_ids = paper_ids[i : i + batch_size]
-        search = arxiv.Search(id_list=batch_ids)
-        batch_papers = [ArxivPaper.from_arxiv_result(p) for p in client.results(search)]
-        papers.extend(batch_papers)
-
-    return papers
+__all__ = [
+    "extract_tex_content",
+    "generate_tldr",
+    "extract_affiliations",
+    "get_code_url",
+]
 
 
 def extract_tex_content(paper: ArxivPaper) -> Optional[Dict[str, str]]:

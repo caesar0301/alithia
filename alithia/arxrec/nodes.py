@@ -8,8 +8,8 @@ from typing import List
 from cogents_core.utils import get_logger
 
 from alithia.researcher import ResearcherProfile
-from alithia.utils.arxiv_paper_utils import extract_affiliations, generate_tldr, get_code_url
 from alithia.utils.arxiv_paper_fetcher import fetch_arxiv_papers
+from alithia.utils.arxiv_paper_utils import extract_affiliations, generate_tldr, get_code_url
 from alithia.utils.email_utils import send_email
 from alithia.utils.llm_utils import get_llm_client
 from alithia.utils.zotero_client import filter_corpus, get_zotero_corpus
@@ -108,7 +108,7 @@ def data_collection_node(state: AgentState) -> dict:
         to_time = yesterday.strftime("%Y%m%d") + "2359"
 
         logger.info(f"Date range: {from_time} to {to_time}")
-        
+
         # Use enhanced paper fetcher with automatic fallback
         try:
             papers = fetch_arxiv_papers(
