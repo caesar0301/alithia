@@ -1,7 +1,6 @@
 """ArXiv search examples: category and date range queries."""
 
-from alithia.utils.arxiv_paper_fetcher import build_arxiv_search_query
-from alithia.utils.arxiv_paper_utils import get_arxiv_papers_search
+from alithia.utils.arxiv_paper_fetcher import build_arxiv_search_query, get_arxiv_papers_search
 
 
 def example_basic_search():
@@ -63,7 +62,6 @@ if __name__ == "__main__":
     print()
 
     example_build_query()
-    # Uncomment to run (makes real API calls):
-    # example_basic_search()
-    # example_debug_mode()
-    # example_single_category()
+    example_basic_search()
+    example_debug_mode()
+    example_single_category()
