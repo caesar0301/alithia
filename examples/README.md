@@ -2,6 +2,30 @@
 
 This directory contains examples demonstrating key components of the Alithia research recommendation system.
 
+## ArXiv Yesterday Papers Diagnostic
+
+This diagnostic tool helps investigate why yesterday's ArXiv query might return 0 papers.
+
+### Running the Diagnostic
+
+```bash
+uv run python examples/diagnose_yesterday_papers.py
+```
+
+This tool runs multiple tests to diagnose the issue:
+1. **Category Query Test**: Verifies categories work without date filter
+2. **Recent Papers (RSS)**: Shows what papers are actually available
+3. **Date Format Verification**: Tests if date format works with a known date
+4. **Multiple Date Ranges**: Tests last 7 days to find where papers exist
+5. **Yesterday Query**: Tests the actual yesterday query
+
+### Common Issues Diagnosed
+
+- **ArXiv API Indexing Delay**: Papers may take hours/days to appear in API
+- **No Submissions**: Some days (especially weekends/holidays) have fewer papers
+- **Date Format Issues**: Verifies YYYYMMDDHHMM format works correctly
+- **Category Issues**: Confirms categories are valid
+
 ## FlashRank Reranking Demo
 
 This example demonstrates how FlashRank is used to rerank papers based on semantic relevance to a user's research corpus.

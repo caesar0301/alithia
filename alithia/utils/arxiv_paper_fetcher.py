@@ -27,7 +27,6 @@ Features:
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -279,9 +278,7 @@ class ArxivPaperFetcher:
 
                 # Fetch results
                 papers = []
-                result_count = 0
                 for result in self.arxiv_client.results(search):
-                    result_count += 1
                     paper = ArxivPaper.from_arxiv_result(result)
                     if paper is not None:
                         papers.append(paper)
@@ -291,114 +288,7 @@ class ArxivPaperFetcher:
                                 f"(published: {paper.published_date})"
                             )
 
-                logger.info(
-                    f"API search completed: {result_count} results from ArXiv API, "
-                    f"{len(papers)} valid papers after processing"
-                )
-                if result_count == 0:
-                    logger.warning(
-                        f"ArXiv API returned 0 results for query: {full_query}. "
-                        f"Date range: {from_time[:8]} (format: YYYYMMDDHHMM)"
-                    )
-                    # Test query without date filter to verify categories work
-                    try:
-                        category_query = _build_category_query(arxiv_query)
-                        test_search = arxiv.Search(
-                            query=category_query,
-                            sort_by=arxiv.SortCriterion.SubmittedDate,
-                            sort_order=arxiv.SortOrder.Descending,
-                            max_results=10,
-                        )
-                        test_papers = []
-                        for test_result in self.arxiv_client.results(test_search):
-                            test_papers.append(test_result)
-                            if len(test_papers) >= 10:
-                                break
-
-                        if len(test_papers) > 0:
-                            # Check the most recent paper's submission date
-                            most_recent = test_papers[0]
-                            recent_date = (
-                                most_recent.published.strftime("%Y%m%d")
-                                if hasattr(most_recent, "published") and most_recent.published
-                                else "unknown"
-                            )
-                            
-                            # Extract all dates from test papers
-                            paper_dates = []
-                            for p in test_papers:
-                                if hasattr(p, "published") and p.published:
-                                    paper_dates.append(p.published.strftime("%Y%m%d"))
-                            
-                            query_date = from_time[:8]
-                            
-                            # Determine the issue
-                            if recent_date != "unknown":
-                                try:
-                                    query_dt = datetime.strptime(query_date, "%Y%m%d")
-                                    recent_dt = datetime.strptime(recent_date, "%Y%m%d")
-                                    days_diff = (query_dt - recent_dt).days
-                                    
-                                    if days_diff > 0:
-                                        logger.warning(
-                                            f"Query date {query_date} is {days_diff} day(s) AFTER the most recent paper ({recent_date}). "
-                                            f"This suggests: (1) ArXiv API indexing delay - papers from {query_date} may not be indexed yet, "
-                                            f"or (2) No papers were submitted on {query_date}."
-                                        )
-                                    elif days_diff == 0:
-                                        logger.warning(
-                                            f"Query date {query_date} matches most recent paper date, but date-filtered query returned 0. "
-                                            f"This suggests a date format or query syntax issue with submittedDate field."
-                                        )
-                                    else:
-                                        logger.info(
-                                            f"Query date {query_date} is before most recent paper ({recent_date}). "
-                                            f"Date range query should work - investigating further..."
-                                        )
-                                except ValueError:
-                                    pass
-                            
-                            logger.info(
-                                f"Category query test (without date filter) returned {len(test_papers)} papers, "
-                                f"confirming categories are valid. Most recent paper date: {recent_date}. "
-                                f"Query date: {query_date}."
-                            )
-                            # Log date distribution from test papers
-                            if paper_dates:
-                                unique_dates = sorted(set(paper_dates), reverse=True)[:5]
-                                logger.info(
-                                    f"Available paper dates in test query (most recent first): {', '.join(unique_dates)}"
-                                )
-                                
-                                # Test if date format works by querying the most recent date
-                                if recent_date != "unknown" and recent_date != query_date:
-                                    try:
-                                        test_date_query = build_arxiv_search_query(
-                                            arxiv_query, f"{recent_date}0000", f"{recent_date}2359"
-                                        )
-                                        test_date_search = arxiv.Search(
-                                            query=test_date_query,
-                                            sort_by=arxiv.SortCriterion.SubmittedDate,
-                                            sort_order=arxiv.SortOrder.Descending,
-                                            max_results=5,
-                                        )
-                                        test_date_count = sum(1 for _ in self.arxiv_client.results(test_date_search))
-                                        if test_date_count > 0:
-                                            logger.info(
-                                                f"Date format verification: Query for {recent_date} (known date with papers) "
-                                                f"returned {test_date_count} papers, confirming date format is correct."
-                                            )
-                                        else:
-                                            logger.warning(
-                                                f"Date format verification: Query for {recent_date} (known date with papers) "
-                                                f"returned 0 papers - date format may be incorrect!"
-                                            )
-                                    except Exception as e:
-                                        logger.debug(f"Could not run date format verification: {e}")
-                        else:
-                            logger.warning("Category query test also returned 0 papers - categories may be invalid")
-                    except Exception as e:
-                        logger.debug(f"Could not run category test query: {e}")
+                logger.info(f"API search successful: found {len(papers)} papers")
                 return FetchResult(
                     papers=papers, strategy_used=FetchStrategy.API_SEARCH, success=True, retry_count=retry_count
                 )
