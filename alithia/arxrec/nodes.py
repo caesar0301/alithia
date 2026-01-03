@@ -107,7 +107,11 @@ def data_collection_node(state: AgentState) -> dict:
         from_time = yesterday.strftime("%Y%m%d") + "0000"
         to_time = yesterday.strftime("%Y%m%d") + "2359"
 
-        logger.info(f"Date range: {from_time} to {to_time}")
+        logger.info(
+            f"Date range: {from_time} to {to_time} "
+            f"(yesterday: {yesterday.strftime('%Y-%m-%d')}, today: {datetime.now().strftime('%Y-%m-%d')})"
+        )
+        logger.info(f"Query categories: {state.config.query}")
 
         # Use enhanced paper fetcher with automatic fallback
         try:

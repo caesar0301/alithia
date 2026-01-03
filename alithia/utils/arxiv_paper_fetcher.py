@@ -200,9 +200,18 @@ class ArxivPaperFetcher:
         if from_time and to_time:
             result = self._fetch_with_api_search(arxiv_query, from_time, to_time, max_results)
             if result.success:
-                result.elapsed_time = time.time() - start_time
-                return result
-            logger.warning(f"API search failed: {result.error_message}")
+                if len(result.papers) > 0:
+                    # API search succeeded and found papers
+                    result.elapsed_time = time.time() - start_time
+                    return result
+                else:
+                    # API search succeeded but returned 0 papers - fallback to RSS
+                    logger.warning(
+                        f"API search returned 0 papers for date range {from_time} to {to_time}. "
+                        f"Falling back to RSS feed which may have recent papers."
+                    )
+            else:
+                logger.warning(f"API search failed: {result.error_message}")
 
         # Strategy 2: Try RSS feed
         result = self._fetch_with_rss_feed(arxiv_query, max_results)
@@ -269,12 +278,47 @@ class ArxivPaperFetcher:
 
                 # Fetch results
                 papers = []
+                result_count = 0
                 for result in self.arxiv_client.results(search):
+                    result_count += 1
                     paper = ArxivPaper.from_arxiv_result(result)
                     if paper is not None:
                         papers.append(paper)
+                        if len(papers) <= 3:  # Log first few papers for debugging
+                            logger.debug(
+                                f"  Paper {len(papers)}: {paper.arxiv_id} - {paper.title[:60]}... "
+                                f"(published: {paper.published_date})"
+                            )
 
-                logger.info(f"API search successful: found {len(papers)} papers")
+                logger.info(
+                    f"API search completed: {result_count} results from ArXiv API, "
+                    f"{len(papers)} valid papers after processing"
+                )
+                if result_count == 0:
+                    logger.warning(
+                        f"ArXiv API returned 0 results for query: {full_query}. "
+                        f"This might indicate: (1) No papers submitted on {from_time[:8]}, "
+                        f"(2) Date format issue, or (3) Query syntax issue."
+                    )
+                    # Test query without date filter to verify categories work
+                    try:
+                        category_query = _build_category_query(arxiv_query)
+                        test_search = arxiv.Search(
+                            query=category_query,
+                            sort_by=arxiv.SortCriterion.SubmittedDate,
+                            sort_order=arxiv.SortOrder.Descending,
+                            max_results=5,
+                        )
+                        test_count = sum(1 for _ in self.arxiv_client.results(test_search))
+                        if test_count > 0:
+                            logger.info(
+                                f"Category query test (without date filter) returned {test_count} papers, "
+                                f"confirming categories are valid. The issue is likely with the date range."
+                            )
+                        else:
+                            logger.warning("Category query test also returned 0 papers - categories may be invalid")
+                    except Exception as e:
+                        logger.debug(f"Could not run category test query: {e}")
                 return FetchResult(
                     papers=papers, strategy_used=FetchStrategy.API_SEARCH, success=True, retry_count=retry_count
                 )
