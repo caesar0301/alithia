@@ -2,9 +2,9 @@
 Paper recommendation and reranking utilities.
 """
 
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-import logging
 
 import numpy as np
 
@@ -16,26 +16,21 @@ logger = logging.getLogger(__name__)
 class PaperReranker:
     """
     Paper reranking system with multiple strategies.
-    
+
     Supports:
     - Sentence Transformer embeddings (recommended, default)
     - FlashRank reranking (optional, requires flashrank)
-    
+
     Features:
     - Time-decay weighting for corpus recency
     - Batch processing for efficiency
     - Error handling and fallback scoring
     """
-    
-    def __init__(
-        self, 
-        papers: List[ArxivPaper], 
-        corpus: List[Dict[str, Any]],
-        cache_dir: Optional[str] = None
-    ):
+
+    def __init__(self, papers: List[ArxivPaper], corpus: List[Dict[str, Any]], cache_dir: Optional[str] = None):
         """
         Initialize the reranker.
-        
+
         Args:
             papers: List of papers to rank
             corpus: User's research corpus for comparison
@@ -44,7 +39,7 @@ class PaperReranker:
         self.papers = papers
         self.corpus = corpus
         self.cache_dir = cache_dir or "/tmp/alithia_models"
-        
+
         # Validate inputs
         if not self.papers:
             logger.warning("No papers provided for reranking")
@@ -123,19 +118,16 @@ class PaperReranker:
         return scored_papers
 
     def rerank_sentence_transformer(
-        self, 
-        model_name: str = "avsolatorio/GIST-small-Embedding-v0",
-        batch_size: int = 32,
-        show_progress: bool = False
+        self, model_name: str = "avsolatorio/GIST-small-Embedding-v0", batch_size: int = 32, show_progress: bool = False
     ) -> List[ScoredPaper]:
         """
         Rerank papers using sentence transformers.
-        
+
         Args:
             model_name: Sentence transformer model to use
             batch_size: Batch size for encoding
             show_progress: Show progress bar during encoding
-            
+
         Returns:
             List of scored papers sorted by relevance
         """
@@ -149,7 +141,7 @@ class PaperReranker:
         if not self.papers:
             logger.warning("No papers to rerank")
             return []
-            
+
         if not self.corpus:
             logger.warning("Empty corpus, returning papers with default scores")
             return [ScoredPaper(paper=paper, score=5.0, relevance_factors={"default": 5.0}) for paper in self.papers]
@@ -169,15 +161,16 @@ class PaperReranker:
                 except Exception as e:
                     logger.warning(f"Error processing corpus item: {e}")
                     continue
-            
+
             sorted_corpus.sort(
-                key=lambda x: datetime.strptime(x["data"]["dateAdded"], "%Y-%m-%dT%H:%M:%SZ"), 
-                reverse=True
+                key=lambda x: datetime.strptime(x["data"]["dateAdded"], "%Y-%m-%dT%H:%M:%SZ"), reverse=True
             )
-            
+
             if not sorted_corpus:
                 logger.warning("No valid corpus items after filtering")
-                return [ScoredPaper(paper=paper, score=5.0, relevance_factors={"fallback": 5.0}) for paper in self.papers]
+                return [
+                    ScoredPaper(paper=paper, score=5.0, relevance_factors={"fallback": 5.0}) for paper in self.papers
+                ]
 
             # Calculate time decay weights
             time_decay_weight = 1 / (1 + np.log10(np.arange(len(sorted_corpus)) + 1))
@@ -191,11 +184,14 @@ class PaperReranker:
                 if abstract and len(abstract.strip()) > 0:
                     corpus_texts.append(abstract)
                     valid_corpus_indices.append(idx)
-            
+
             if not corpus_texts:
                 logger.warning("No valid abstracts in corpus")
-                return [ScoredPaper(paper=paper, score=5.0, relevance_factors={"no_corpus_text": 5.0}) for paper in self.papers]
-            
+                return [
+                    ScoredPaper(paper=paper, score=5.0, relevance_factors={"no_corpus_text": 5.0})
+                    for paper in self.papers
+                ]
+
             # Update time decay weights for valid corpus items only
             time_decay_weight = time_decay_weight[valid_corpus_indices]
             time_decay_weight = time_decay_weight / time_decay_weight.sum()
@@ -206,7 +202,7 @@ class PaperReranker:
                 batch_size=batch_size,
                 show_progress_bar=show_progress,
                 convert_to_tensor=False,
-                normalize_embeddings=True  # Normalize for cosine similarity
+                normalize_embeddings=True,  # Normalize for cosine similarity
             )
 
             # Extract and validate paper texts
@@ -218,7 +214,7 @@ class PaperReranker:
                     valid_papers.append(paper)
                 else:
                     logger.warning(f"Paper {paper.arxiv_id} has no summary, skipping")
-            
+
             if not paper_texts:
                 logger.warning("No valid paper summaries to rank")
                 return []
@@ -229,11 +225,12 @@ class PaperReranker:
                 batch_size=batch_size,
                 show_progress_bar=show_progress,
                 convert_to_tensor=False,
-                normalize_embeddings=True
+                normalize_embeddings=True,
             )
 
             # Calculate similarity scores (cosine similarity with normalized embeddings)
             from sklearn.metrics.pairwise import cosine_similarity
+
             similarities = cosine_similarity(paper_embeddings, corpus_embeddings)
 
             # Calculate weighted scores with time decay
@@ -249,22 +246,21 @@ class PaperReranker:
                         "corpus_similarity": float(score),
                         "corpus_size": len(corpus_texts),
                         "max_similarity": float(sim_vector.max()),
-                        "mean_similarity": float(sim_vector.mean())
+                        "mean_similarity": float(sim_vector.mean()),
                     },
                 )
                 scored_papers.append(scored_paper)
 
             # Sort by score (highest first)
             scored_papers.sort(key=lambda x: x.score, reverse=True)
-            
+
             logger.info(f"Successfully reranked {len(scored_papers)} papers")
             return scored_papers
-            
+
         except Exception as e:
             logger.error(f"Error during reranking: {e}")
             # Fallback to basic scoring
             logger.info("Using fallback scoring")
             return [
-                ScoredPaper(paper=paper, score=5.0, relevance_factors={"error_fallback": 5.0}) 
-                for paper in self.papers
+                ScoredPaper(paper=paper, score=5.0, relevance_factors={"error_fallback": 5.0}) for paper in self.papers
             ]

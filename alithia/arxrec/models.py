@@ -2,9 +2,8 @@
 Paper data models for the Alithia research agent.
 """
 
-import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from cogents_core.utils import get_logger
 from pydantic import BaseModel, Field

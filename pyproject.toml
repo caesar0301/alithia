@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alithia"
-version = "0.2.6"
+version = "0.2.7"
 description = "Your ultimate research companion"
 readme = "README.md"
 license = "MIT"
@@ -28,24 +28,22 @@ requires-python = ">=3.11"
 
 dependencies = [
     "cogents-core>=1.0.0,<2.0.0",
-    # arxrec
-    "arxiv>=2.1.3",
-    "pyzotero>=1.5.25",
-    "scikit-learn>=1.5.2",
-    "gitignore-parser>=0.1.11",
-    "tiktoken>=0.8.0",
-    "feedparser>=6.0.11",
-    "sentence-transformers>=3.0.0",
-    "beautifulsoup4>=4.12.0",
-    "lxml>=5.0.0",
-    # paperlens
-    "docling>=2.58.0",
-    "onnxruntime>=1.23.2",
 ]
 
 [project.optional-dependencies]
 
-# Development environment
+all = ["alithia[default, paperlens]"]
+
+default = ["arxiv>=2.1.3", "pyzotero>=1.5.25", "scikit-learn>=1.5.2", "gitignore-parser>=0.1.11",
+    "tiktoken>=0.8.0", "feedparser>=6.0.11", "sentence-transformers>=3.0.0",
+    "beautifulsoup4>=4.12.0", "lxml>=5.0.0",]
+
+arxrec = ["alithia[default]"]
+
+paperlens = ["alithia[docling]"]
+
+docling = ["docling>=2.58.0", "onnxruntime>=1.23.2"]
+
 dev = [
     "pytest>=8.2,<9",
     "pytest-cov>=4.0.0",

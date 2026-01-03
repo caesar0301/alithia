@@ -33,6 +33,78 @@ In Alithia, we connect each researcher’s profile with publicly available acade
   * Web search engines (e.g., tavily)
   * Individual researcher homepage
 
+## Installation
+
+Alithia uses optional dependencies to keep the base installation lightweight. The default installation includes Arxrec agent dependencies.
+
+### Recommended: Default Installation
+
+For most users, install with default dependencies (includes Arxrec agent: ArXiv fetching, Zotero integration, email notifications, etc.):
+
+```bash
+pip install alithia[default]
+```
+
+This installs:
+- `arxiv` - ArXiv paper fetching
+- `pyzotero` - Zotero library integration
+- `scikit-learn` - Machine learning utilities
+- `sentence-transformers` - Embedding models
+- `feedparser` - RSS feed parsing
+- `beautifulsoup4` & `lxml` - Web scraping
+- `tiktoken` - Token counting
+- And other Arxrec dependencies
+
+**Note:** `alithia[arxrec]` is an alias for `alithia[default]` and works the same way.
+
+### Minimal Installation
+
+Install only the core library (includes `cogents-core` only, no Arxrec features):
+
+```bash
+pip install alithia
+```
+
+⚠️ **Warning:** This minimal installation does not include Arxrec agent dependencies. Most users should use `alithia[default]` instead.
+
+### Install with PaperLens Support
+
+For PDF analysis and deep paper interaction:
+
+```bash
+pip install alithia[paperlens]
+```
+
+This installs:
+- `docling` - PDF parsing and OCR
+- `onnxruntime` - Model inference
+
+### Install All Features
+
+Install everything (Default/Arxrec + PaperLens):
+
+```bash
+pip install alithia[all]
+```
+
+### Development Installation
+
+For development, clone the repository and install with development dependencies:
+
+```bash
+git clone https://github.com/caesar0301/alithia.git
+cd alithia
+uv sync --extra default --extra dev
+```
+
+Or using pip:
+
+```bash
+pip install -e ".[default,dev]"
+```
+
+**Note:** You can also use `alithia[arxrec,dev]` as `arxrec` is an alias for `default`.
+
 ## Quick Start
 
 ### 1. Setup Arxrec Agent
