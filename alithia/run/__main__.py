@@ -14,23 +14,36 @@ from cogents_core.utils import get_logger
 logger = get_logger(__name__)
 
 
-def create_arxrec_parser(subparsers):
-    """Create argument parser for arxrec agent."""
+def create_paperscout_parser(subparsers):
+    """Create argument parser for paperscout agent."""
     parser = subparsers.add_parser(
-        "arxrec_agent",
+        "paperscout_agent",
         help="Personalized arXiv recommendation agent",
-        description="A personalized arXiv recommendation agent.",
+        description="PaperScout - A personalized arXiv recommendation agent that delivers daily paper recommendations.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run with environment variables
-  python -m alithia.run arxrec_agent
+  # Run with environment variables (defaults to yesterday)
+  python -m alithia.run paperscout_agent
   
   # Run with configuration file
-  python -m alithia.run arxrec_agent --config config.json
+  python -m alithia.run paperscout_agent --config config.json
+  
+  # Run with custom date range
+  python -m alithia.run paperscout_agent --from-date 2024-01-01 --to-date 2024-01-07
         """,
     )
     parser.add_argument("-c", "--config", type=str, help="Configuration file path (JSON)")
+    parser.add_argument(
+        "--from-date",
+        type=str,
+        help="Start date for paper query (YYYY-MM-DD format). Defaults to yesterday if not specified.",
+    )
+    parser.add_argument(
+        "--to-date",
+        type=str,
+        help="End date for paper query (YYYY-MM-DD format). Defaults to from-date if not specified.",
+    )
     return parser
 
 
@@ -102,34 +115,40 @@ Examples:
     return parser
 
 
-def run_arxrec_agent(args):
-    """Run the arxrec agent."""
-    from alithia.arxrec.agent import ArxrecAgent
-    from alithia.arxrec.state import ArxrecConfig
+def run_paperscout_agent(args):
+    """Run the paperscout agent."""
     from alithia.config_loader import load_config
+    from alithia.paperscout.agent import PaperScoutAgent
+    from alithia.paperscout.state import PaperScoutConfig
     from alithia.researcher.profile import ResearcherProfile
 
     # Build configuration
     config_dict = load_config(args.config)
 
-    # Create ArxrecConfig
+    # Create PaperScoutConfig - try new name first, fallback to old for compatibility
     try:
-        arxrec_settings = config_dict.get("arxrec", {})
+        paperscout_settings = config_dict.get("paperscout_agent", config_dict.get("arxrec", {}))
 
-        config = ArxrecConfig(
+        # CLI arguments override config file values
+        from_date = getattr(args, "from_date", None) or paperscout_settings.get("from_date")
+        to_date = getattr(args, "to_date", None) or paperscout_settings.get("to_date")
+
+        config = PaperScoutConfig(
             user_profile=ResearcherProfile.from_config(config_dict),
-            query=arxrec_settings.get("query", "cs.AI+cs.CV+cs.LG+cs.CL"),
-            max_papers=arxrec_settings.get("max_papers", 50),
-            send_empty=arxrec_settings.get("send_empty", False),
-            ignore_patterns=arxrec_settings.get("ignore_patterns", []),
+            query=paperscout_settings.get("query", "cs.AI+cs.CV+cs.LG+cs.CL"),
+            max_papers=paperscout_settings.get("max_papers", 50),
+            send_empty=paperscout_settings.get("send_empty", False),
+            ignore_patterns=paperscout_settings.get("ignore_patterns", []),
+            from_date=from_date,
+            to_date=to_date,
             debug=config_dict.get("debug", False),
         )
     except Exception as e:
-        logger.error(f"Failed to create ArxrecConfig: {e}")
+        logger.error(f"Failed to create PaperScoutConfig: {e}")
         sys.exit(1)
 
     # Create and run agent
-    agent = ArxrecAgent()
+    agent = PaperScoutAgent()
 
     try:
         logger.info("Starting Alithia research agent...")
@@ -244,11 +263,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Available Agents:
-  arxrec_agent      Personalized arXiv recommendation agent
+  paperscout_agent  Personalized arXiv recommendation agent
   paperlens_agent   Deep paper interaction and discovery tool
 
 Examples:
-  python -m alithia.run arxrec_agent --config config.json
+  python -m alithia.run paperscout_agent --config config.json
   python -m alithia.run paperlens_agent -i topic.txt -d ./papers
 
 For more information on each agent, use:
@@ -260,15 +279,15 @@ For more information on each agent, use:
     subparsers = parser.add_subparsers(dest="agent", help="Agent to run", required=True)
 
     # Add agent parsers
-    create_arxrec_parser(subparsers)
+    create_paperscout_parser(subparsers)
     create_paperlens_parser(subparsers)
 
     # Parse arguments
     args = parser.parse_args()
 
     # Route to appropriate agent
-    if args.agent == "arxrec_agent":
-        run_arxrec_agent(args)
+    if args.agent == "paperscout_agent":
+        run_paperscout_agent(args)
     elif args.agent == "paperlens_agent":
         run_paperlens_agent(args)
     else:

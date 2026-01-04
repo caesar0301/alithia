@@ -14,14 +14,15 @@ from .nodes import (
     profile_analysis_node,
     relevance_assessment_node,
 )
-from .state import AgentState, ArxrecConfig
+from .state import AgentState, PaperScoutConfig
 
 logger = logging.getLogger(__name__)
 
 
-class ArxrecAgent:
+class PaperScoutAgent:
     """
-    LangGraph-based research agent that replicates zotero-arxiv-daily functionality.
+    LangGraph-based research agent for personalized ArXiv paper recommendations.
+    Delivers daily paper recommendations from ArXiv to your inbox.
     """
 
     def __init__(self):
@@ -52,12 +53,12 @@ class ArxrecAgent:
         # Compile with state configuration to ensure proper state handling
         return workflow.compile()
 
-    def run(self, config: ArxrecConfig) -> Dict[str, Any]:
+    def run(self, config: PaperScoutConfig) -> Dict[str, Any]:
         """
         Run the research agent with given configuration.
 
         Args:
-            config: ArxrecConfig object with all necessary parameters
+            config: PaperScoutConfig object with all necessary parameters
 
         Returns:
             Final state dictionary with results

@@ -91,48 +91,55 @@ def _build_config_from_envs() -> Dict[str, Any]:
 
     # Map environment variables to nested config structure
     env_mapping = {
+        # Researcher profile - basic info
+        "researcher_profile.research_interests": "ALITHIA_RESEARCH_INTERESTS",
+        "researcher_profile.expertise_level": "ALITHIA_EXPERTISE_LEVEL",
+        "researcher_profile.language": "ALITHIA_LANGUAGE",
+        "researcher_profile.email": "ALITHIA_EMAIL",
+        # Researcher profile - LLM settings
+        "researcher_profile.llm.openai_api_key": "ALITHIA_OPENAI_API_KEY",
+        "researcher_profile.llm.openai_api_base": "ALITHIA_OPENAI_API_BASE",
+        "researcher_profile.llm.model_name": "ALITHIA_MODEL_NAME",
+        # Researcher profile - Zotero settings
+        "researcher_profile.zotero.zotero_id": "ALITHIA_ZOTERO_ID",
+        "researcher_profile.zotero.zotero_key": "ALITHIA_ZOTERO_KEY",
+        # Researcher profile - Email notification settings
+        "researcher_profile.email_notification.smtp_server": "ALITHIA_SMTP_SERVER",
+        "researcher_profile.email_notification.smtp_port": "ALITHIA_SMTP_PORT",
+        "researcher_profile.email_notification.sender": "ALITHIA_SENDER",
+        "researcher_profile.email_notification.sender_password": "ALITHIA_SENDER_PASSWORD",
+        # Supabase settings
+        "supabase.url": "ALITHIA_SUPABASE_URL",
+        "supabase.anon_key": "ALITHIA_SUPABASE_ANON_KEY",
+        "supabase.service_role_key": "ALITHIA_SUPABASE_SERVICE_ROLE_KEY",
+        # Storage settings
+        "storage.backend": "ALITHIA_STORAGE_BACKEND",
+        "storage.fallback_to_sqlite": "ALITHIA_STORAGE_FALLBACK_TO_SQLITE",
+        "storage.sqlite_path": "ALITHIA_STORAGE_SQLITE_PATH",
+        "storage.user_id": "ALITHIA_STORAGE_USER_ID",
+        # PaperScout agent settings
+        "paperscout_agent.query": "ALITHIA_ARXIV_QUERY",
+        "paperscout_agent.max_papers": "ALITHIA_MAX_PAPER_NUM",
+        "paperscout_agent.send_empty": "ALITHIA_SEND_EMPTY",
+        "paperscout_agent.ignore_patterns": "ALITHIA_ZOTERO_IGNORE",
         # General settings
-        "research_interests": "ALITHIA_RESEARCH_INTERESTS",
-        "expertise_level": "ALITHIA_EXPERTISE_LEVEL",
-        "language": "ALITHIA_LANGUAGE",
-        "email": "ALITHIA_EMAIL",
         "debug": "ALITHIA_DEBUG",
-        # LLM settings
-        "llm.openai_api_key": "ALITHIA_OPENAI_API_KEY",
-        "llm.openai_api_base": "ALITHIA_OPENAI_API_BASE",
-        "llm.model_name": "ALITHIA_MODEL_NAME",
-        # Zotero settings
-        "zotero.zotero_id": "ALITHIA_ZOTERO_ID",
-        "zotero.zotero_key": "ALITHIA_ZOTERO_KEY",
-        # Email notification settings
-        "email_notification.smtp_server": "ALITHIA_SMTP_SERVER",
-        "email_notification.smtp_port": "ALITHIA_SMTP_PORT",
-        "email_notification.sender": "ALITHIA_SENDER",
-        "email_notification.sender_password": "ALITHIA_SENDER_PASSWORD",
-        "email_notification.receiver": "ALITHIA_RECEIVER",
-        # Arxrec specific settings
-        "arxrec.query": "ALITHIA_ARXIV_QUERY",
-        "arxrec.max_papers": "ALITHIA_MAX_PAPER_NUM",
-        "arxrec.send_empty": "ALITHIA_SEND_EMPTY",
-        "arxrec.ignore_patterns": "ALITHIA_ZOTERO_IGNORE",
     }
 
     for config_key, env_key in env_mapping.items():
         value = get_env(env_key)
         if value is not None:
             # Convert string values to appropriate types
-            if config_key in ["email_notification.smtp_port", "arxrec.max_papers"]:
+            if config_key in ["researcher_profile.email_notification.smtp_port", "paperscout_agent.max_papers"]:
                 try:
                     value = int(value)
                 except ValueError:
                     continue
-            elif config_key in ["arxrec.send_empty", "debug"]:
+            elif config_key in ["paperscout_agent.send_empty", "storage.fallback_to_sqlite", "debug"]:
                 value = str(value).lower() in ["true", "1", "yes"]
-            elif config_key == "arxrec.ignore_patterns" and value:
-                # Convert comma-separated string to list
+            elif config_key == "paperscout_agent.ignore_patterns" and value:
                 value = [pattern.strip() for pattern in value.split(",") if pattern.strip()]
-            elif config_key == "research_interests" and value:
-                # Convert comma-separated string to list
+            elif config_key == "researcher_profile.research_interests" and value:
                 value = [interest.strip() for interest in value.split(",") if interest.strip()]
 
             # Set nested value

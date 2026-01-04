@@ -13,8 +13,8 @@ from alithia.researcher import ResearcherProfile
 from .models import ArxivPaper, EmailContent, ScoredPaper
 
 
-class ArxrecConfig(BaseModel):
-    """Arxrec configuration."""
+class PaperScoutConfig(BaseModel):
+    """PaperScout agent configuration."""
 
     # User Profile
     user_profile: ResearcherProfile
@@ -24,6 +24,10 @@ class ArxrecConfig(BaseModel):
     max_papers: int = 50
     send_empty: bool = False
     ignore_patterns: List[str] = Field(default_factory=list)
+
+    # Date Range (YYYY-MM-DD format, None defaults to yesterday)
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
 
     debug: bool = False
 
@@ -37,7 +41,7 @@ class AgentState(BaseModel):
     """Centralized state for the research agent workflow."""
 
     # Agent Config
-    config: ArxrecConfig
+    config: PaperScoutConfig
 
     # Discovery State
     discovered_papers: List[ArxivPaper] = Field(default_factory=list)

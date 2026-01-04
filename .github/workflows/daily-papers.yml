@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '0 22 * * *'
   workflow_dispatch:
+    inputs:
+      from_date:
+        description: 'Start date for paper search (YYYY-MM-DD)'
+        required: false
+        type: string
+      to_date:
+        description: 'End date for paper search (YYYY-MM-DD)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -14,7 +23,7 @@ env:
   FORCE_RUN: true
 
 jobs:
-  run-arxrec-agent:
+  run-paperscout-agent:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -33,23 +42,31 @@ jobs:
     - name: Install dependencies
       run: uv sync --extra default
 
-    - name: Run ArXiv Research Agent
-      env:
-        ALITHIA_CONFIG_JSON: ${{ secrets.ALITHIA_CONFIG_JSON }}
+    - name: Create configuration file
       run: |
-        if [ -z "$ALITHIA_CONFIG_JSON" ]; then
-          echo "❌ Error: ALITHIA_CONFIG_JSON secret is not set"
-          exit 1
+        echo '${{ secrets.ALITHIA_CONFIG_JSON }}' > paperscout_config.json
+
+    - name: Run PaperScout Agent
+      run: |
+        ARGS="--config paperscout_config.json"
+        if [ -n "${{ inputs.from_date }}" ]; then
+          ARGS="$ARGS --from-date ${{ inputs.from_date }}"
         fi
-        echo "$ALITHIA_CONFIG_JSON" > arxrec_config.json
-        uv run python -m alithia.run arxrec_agent --config arxrec_config.json
-        rm -rf arxrec_config.json
+        if [ -n "${{ inputs.to_date }}" ]; then
+          ARGS="$ARGS --to-date ${{ inputs.to_date }}"
+        fi
+        ./scripts/run_paperscout.sh $ARGS
+
+    - name: Clean up configuration
+      if: always()
+      run: |
+        rm -f paperscout_config.json
 
     - name: Upload logs on failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: arxrec-logs-${{ github.run_id }}
+        name: paperscout-logs-${{ github.run_id }}
         path: |
           *.log
         retention-days: 3

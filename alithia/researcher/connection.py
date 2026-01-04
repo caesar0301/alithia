@@ -15,7 +15,6 @@ class EmailConnection(BaseModel):
     smtp_port: int
     sender: str
     sender_password: str
-    receiver: str
 
 
 class GithubConnection(BaseModel):

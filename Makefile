@@ -29,7 +29,7 @@ help: ## Show this help message
 
 install: ## Install development dependencies
 	@echo "$(BLUE)🔧 Installing development dependencies...$(RESET)"
-	@uv sync --extra dev
+	@uv sync --extra default --extra dev
 
 setup: install ## Setup development environment
 	@echo "$(GREEN)✅ Development environment ready$(RESET)"
@@ -40,6 +40,38 @@ check-env: ## Check environment setup
 	@echo "uv version: $$(uv --version)"
 	@echo "Working directory: $$(pwd)"
 	@echo "Python modules: $(PYTHON_MODULES)"
+
+# =============================================================================
+# AGENT COMMANDS
+# =============================================================================
+
+.PHONY: paperscout paperlens
+
+paperscout: ## Run PaperScout agent (use CONFIG=path/to/config.json, FROM_DATE=YYYY-MM-DD, TO_DATE=YYYY-MM-DD)
+	@echo "$(BLUE)📰 Running PaperScout agent...$(RESET)"
+	@set -e; \
+	CMD="uv run python -m alithia.run paperscout_agent"; \
+	if [ -n "$(CONFIG)" ]; then CMD="$$CMD --config $(CONFIG)"; fi; \
+	if [ -n "$(FROM_DATE)" ]; then CMD="$$CMD --from-date $(FROM_DATE)"; fi; \
+	if [ -n "$(TO_DATE)" ]; then CMD="$$CMD --to-date $(TO_DATE)"; fi; \
+	eval $$CMD
+
+paperlens: ## Run PaperLens agent (requires INPUT=path/to/topic.txt and DIRECTORY=path/to/papers)
+	@echo "$(BLUE)🔍 Running PaperLens agent...$(RESET)"
+	@if [ -z "$(INPUT)" ] || [ -z "$(DIRECTORY)" ]; then \
+		echo "$(RED)❌ Error: INPUT and DIRECTORY are required$(RESET)"; \
+		echo "Usage: make paperlens INPUT=path/to/topic.txt DIRECTORY=path/to/papers"; \
+		echo "Optional: TOP_N=20 MODEL=all-mpnet-base-v2 VERBOSE=1"; \
+		exit 1; \
+	fi
+	@set -e; \
+	CMD="uv run python -m alithia.run paperlens_agent -i $(INPUT) -d $(DIRECTORY)"; \
+	if [ -n "$(TOP_N)" ]; then CMD="$$CMD -n $(TOP_N)"; fi; \
+	if [ -n "$(MODEL)" ]; then CMD="$$CMD --model $(MODEL)"; fi; \
+	if [ -n "$(VERBOSE)" ]; then CMD="$$CMD -v"; fi; \
+	if [ -n "$(NO_RECURSIVE)" ]; then CMD="$$CMD --no-recursive"; fi; \
+	if [ -n "$(FORCE_GPU)" ]; then CMD="$$CMD --force-gpu"; fi; \
+	eval $$CMD
 
 # =============================================================================
 # TEST COMMANDS
@@ -139,6 +171,31 @@ clean: ## Clean Python cache and build artifacts
 
 clean-all: clean ## Clean everything including dependencies
 	@echo "$(GREEN)✅ Complete cleanup finished!$(RESET)"
+
+# =============================================================================
+# EXAMPLE COMMANDS
+# =============================================================================
+
+.PHONY: examples run-examples example-arxiv example-flashrank example-diagnose example-docling
+
+examples: run-examples ## Run all examples (alias)
+
+run-examples: ## Run all runnable examples
+	@echo "$(BLUE)📚 Running examples...$(RESET)"
+	@echo ""
+	@echo "$(GREEN)▶ Running ArXiv Search Example...$(RESET)"
+	@uv run python examples/arxiv_search_example.py || true
+	@echo ""
+	@echo "$(GREEN)▶ Running FlashRank Demo...$(RESET)"
+	@uv run python examples/flashrank_demo.py || true
+	@echo ""
+	@echo "$(GREEN)▶ Running Yesterday Papers Diagnostic...$(RESET)"
+	@uv run python examples/diagnose_yesterday_papers.py || true
+	@echo ""
+	@echo "$(BLUE)💡 Note: docling_ocr_example.py requires a PDF file argument$(RESET)"
+	@echo "   Run with: make example-docling PDF=path/to/paper.pdf"
+	@echo ""
+	@echo "$(GREEN)✅ All examples completed!$(RESET)"
 
 # =============================================================================
 # UTILITY COMMANDS

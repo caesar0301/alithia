@@ -25,7 +25,6 @@ def test_get_llm_sets_env_and_model():
             smtp_port=587,
             sender="test@example.com",
             sender_password="test_pass",
-            receiver="test@example.com",
         ),
         github=GithubConnection(github_username="test_user", github_token="test_token"),
         google_scholar=GoogleScholarConnection(google_scholar_id="test_id", google_scholar_token="test_token"),

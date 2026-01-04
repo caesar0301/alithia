@@ -35,11 +35,11 @@ In Alithia, we connect each researcher’s profile with publicly available acade
 
 ## Installation
 
-Alithia uses optional dependencies to keep the base installation lightweight. The default installation includes Arxrec agent dependencies.
+Alithia uses optional dependencies to keep the base installation lightweight. The default installation includes PaperScout agent dependencies.
 
 ### Recommended: Default Installation
 
-For most users, install with default dependencies (includes Arxrec agent: ArXiv fetching, Zotero integration, email notifications, etc.):
+For most users, install with default dependencies (includes PaperScout agent: ArXiv fetching, Zotero integration, email notifications, etc.):
 
 ```bash
 pip install alithia[default]
@@ -53,19 +53,19 @@ This installs:
 - `feedparser` - RSS feed parsing
 - `beautifulsoup4` & `lxml` - Web scraping
 - `tiktoken` - Token counting
-- And other Arxrec dependencies
+- And other PaperScout dependencies
 
-**Note:** `alithia[arxrec]` is an alias for `alithia[default]` and works the same way.
+**Note:** `alithia[paperscout]` is an alias for `alithia[default]` and works the same way.
 
 ### Minimal Installation
 
-Install only the core library (includes `cogents-core` only, no Arxrec features):
+Install only the core library (includes `cogents-core` only, no PaperScout features):
 
 ```bash
 pip install alithia
 ```
 
-⚠️ **Warning:** This minimal installation does not include Arxrec agent dependencies. Most users should use `alithia[default]` instead.
+⚠️ **Warning:** This minimal installation does not include PaperScout agent dependencies. Most users should use `alithia[default]` instead.
 
 ### Install with PaperLens Support
 
@@ -81,7 +81,7 @@ This installs:
 
 ### Install All Features
 
-Install everything (Default/Arxrec + PaperLens):
+Install everything (Default/PaperScout + PaperLens):
 
 ```bash
 pip install alithia[all]
@@ -103,13 +103,13 @@ Or using pip:
 pip install -e ".[default,dev]"
 ```
 
-**Note:** You can also use `alithia[arxrec,dev]` as `arxrec` is an alias for `default`.
+**Note:** You can also use `alithia[paperscout,dev]` as `paperscout` is an alias for `default`.
 
 ## Quick Start
 
-### 1. Setup Arxrec Agent
+### 1. Setup PaperScout Agent
 
-The Arxrec Agent delivers daily paper recommendations from arXiv to your inbox.
+The PaperScout Agent delivers daily paper recommendations from arXiv to your inbox.
 
 **Prerequisites:**
 1. **Zotero Account**: [Sign up](https://www.zotero.org) and get your user ID and API key from Settings → Feeds/API
@@ -125,6 +125,43 @@ The Arxrec Agent delivers daily paper recommendations from arXiv to your inbox.
 ### 2. Configuration
 
 Create a JSON configuration with your credentials. See [alithia_config_example.json](alithia_config_example.json) for a complete example.
+
+## Storage Backend
+
+Alithia uses **Supabase** (PostgreSQL) as the default stateful storage backend, with automatic fallback to **SQLite** when Supabase is unavailable. This enables:
+
+- **Persistent caching** of Zotero libraries and parsed papers
+- **Continuous paper feeding** that handles ArXiv indexing delays
+- **Deduplication** to prevent duplicate email notifications  
+- **Query history** tracking for PaperLens interactions
+
+### Quick Setup
+
+1. **Create a Supabase project** at [supabase.com](https://supabase.com) (free tier available)
+2. **Run the migration**: Copy contents of `alithia/storage/migrations/001_initial_schema.sql` to Supabase SQL Editor
+3. **Configure Alithia**: Add Supabase credentials to your config:
+
+```json
+{
+  "storage": {
+    "backend": "supabase",
+    "fallback_to_sqlite": true,
+    "user_id": "your_email@example.com"
+  },
+  "supabase": {
+    "url": "https://xxxxx.supabase.co",
+    "anon_key": "your_anon_key",
+    "service_role_key": "your_service_role_key"
+  }
+}
+```
+
+### Storage Options
+
+- **Supabase (default)**: Cloud PostgreSQL with automatic backups, full-text search, and multi-user support
+- **SQLite (fallback)**: Local single-file database, works offline, no setup required
+
+For detailed setup instructions, see [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md).
 
 ## License
 

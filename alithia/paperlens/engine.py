@@ -5,13 +5,15 @@ Given a research topic and a directory of PDF papers, finds the most relevant pa
 using semantic similarity matching.
 """
 
+import hashlib
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from cogents_core.utils import get_logger
 
 from alithia.paperlens.paper_ocr.docling import DoclingOcr
+from alithia.storage.base import StorageBackend
 
 logger = get_logger(__name__)
 
@@ -29,13 +31,23 @@ except ImportError:
 
 from alithia.paperlens.models import (
     AcademicPaper,
+    FileMetadata,
+    PaperContent,
+    PaperMetadata,
 )
 
 
 class PaperLensEngine:
     """Core engine for paper analysis and ranking."""
 
-    def __init__(self, sbert_model: str = "all-MiniLM-L6-v2", force_gpu: bool = False, llm=None):
+    def __init__(
+        self,
+        sbert_model: str = "all-MiniLM-L6-v2",
+        force_gpu: bool = False,
+        llm=None,
+        storage: Optional[StorageBackend] = None,
+        user_id: str = "default_user",
+    ):
         """
         Initialize the PaperLens engine.
 
@@ -44,6 +56,8 @@ class PaperLensEngine:
                        Default is 'all-MiniLM-L6-v2' which is fast and efficient.
             force_gpu: Force GPU usage even if CUDA compatibility issues are detected.
             llm: Optional LLM client for enhanced metadata extraction.
+            storage: Optional storage backend for caching parsed papers.
+            user_id: User identifier for storage isolation.
 
         Note:
             This engine uses IBM Granite Docling 258M model for PDF parsing and layout analysis.
@@ -68,12 +82,59 @@ class PaperLensEngine:
 
         self.llm = llm
         self.ocr = DoclingOcr(llm=self.llm)
+        self.storage = storage
+        self.user_id = user_id
+
+        if self.storage:
+            logger.info("Storage backend enabled for paper caching")
 
         logger.info(f"PaperLens engine initialized (device: {device})")
 
+    def _compute_file_hash(self, file_path: Path) -> str:
+        """Compute MD5 hash of a file."""
+        md5_hash = hashlib.md5()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                md5_hash.update(chunk)
+        return md5_hash.hexdigest()
+
+    def _cached_paper_to_model(self, cached_data: dict, pdf_path: Path) -> AcademicPaper:
+        """Convert cached paper data back to AcademicPaper model."""
+        from datetime import datetime
+
+        file_stats = pdf_path.stat()
+
+        file_metadata = FileMetadata(
+            file_path=pdf_path,
+            file_name=pdf_path.name,
+            file_size=file_stats.st_size,
+            last_modified=datetime.fromtimestamp(file_stats.st_mtime),
+            md5_hash=cached_data.get("file_hash"),
+        )
+
+        paper_metadata = PaperMetadata(
+            title=cached_data.get("title"),
+            authors=cached_data.get("authors", []),
+            abstract=cached_data.get("abstract"),
+        )
+
+        paper_content = PaperContent(
+            full_text=cached_data.get("full_text", ""),
+            sections=cached_data.get("sections", {}),
+            figures=cached_data.get("figures", []),
+            tables=cached_data.get("tables", []),
+        )
+
+        return AcademicPaper(
+            file_metadata=file_metadata,
+            paper_metadata=paper_metadata,
+            content=paper_content,
+            parse_timestamp=datetime.fromisoformat(cached_data.get("parsed_at")),
+        )
+
     def parse_file(self, pdf_path: Path) -> AcademicPaper:
         """
-        Parse a single PDF file.
+        Parse a single PDF file with caching support.
 
         Args:
             pdf_path: Path to the PDF file
@@ -81,7 +142,44 @@ class PaperLensEngine:
         Returns:
             Parsed AcademicPaper object or None if parsing fails
         """
-        return self.ocr.parse_file(pdf_path)
+        # Check cache if storage is available
+        if self.storage:
+            try:
+                file_hash = self._compute_file_hash(pdf_path)
+                cached_paper = self.storage.get_parsed_paper(self.user_id, file_hash)
+
+                if cached_paper:
+                    logger.info(f"Using cached paper for {pdf_path.name}")
+                    return self._cached_paper_to_model(cached_paper, pdf_path)
+            except Exception as e:
+                logger.warning(f"Failed to check cache for {pdf_path.name}: {e}")
+
+        # Parse the PDF
+        paper = self.ocr.parse_file(pdf_path)
+
+        # Cache the result if storage is available
+        if paper and self.storage:
+            try:
+                file_hash = self._compute_file_hash(pdf_path)
+                paper_data = {
+                    "file_path": str(paper.file_metadata.file_path),
+                    "file_name": paper.file_metadata.file_name,
+                    "file_hash": file_hash,
+                    "title": paper.paper_metadata.title,
+                    "authors": paper.paper_metadata.authors,
+                    "abstract": paper.paper_metadata.abstract,
+                    "full_text": paper.content.full_text,
+                    "sections": paper.content.sections,
+                    "figures": paper.content.figures,
+                    "tables": paper.content.tables,
+                }
+
+                self.storage.cache_parsed_paper(self.user_id, paper_data)
+                logger.info(f"Cached parsed paper {pdf_path.name}")
+            except Exception as e:
+                logger.warning(f"Failed to cache parsed paper {pdf_path.name}: {e}")
+
+        return paper
 
     def scan_pdf_directory(self, directory: Path, recursive: bool = True) -> List[AcademicPaper]:
         """

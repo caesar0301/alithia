@@ -2,7 +2,7 @@
 
 import pytest
 
-from alithia.arxrec.state import AgentState, ArxrecConfig
+from alithia.paperscout.state import AgentState, PaperScoutConfig
 from alithia.researcher import (
     EmailConnection,
     LLMConnection,
@@ -13,7 +13,7 @@ from alithia.researcher import (
 
 @pytest.fixture
 def sample_config():
-    """Create a sample ArxrecConfig for testing."""
+    """Create a sample PaperScoutConfig for testing."""
     user_profile = ResearcherProfile(
         email="test@example.com",
         zotero=ZoteroConnection(
@@ -24,7 +24,6 @@ def sample_config():
             smtp_server="smtp.test.com",
             smtp_port=587,
             sender="sender@test.com",
-            receiver="receiver@test.com",
             sender_password="password",
         ),
         llm=LLMConnection(
@@ -34,7 +33,7 @@ def sample_config():
         ),
     )
 
-    return ArxrecConfig(
+    return PaperScoutConfig(
         user_profile=user_profile,
         query="cs.AI",
         max_papers=10,

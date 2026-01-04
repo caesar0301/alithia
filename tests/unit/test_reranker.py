@@ -7,9 +7,9 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-from alithia.arxrec.models import ScoredPaper
-from alithia.arxrec.reranker import PaperReranker
 from alithia.models import ArxivPaper
+from alithia.paperscout.models import ScoredPaper
+from alithia.paperscout.reranker import PaperReranker
 
 
 @pytest.fixture
