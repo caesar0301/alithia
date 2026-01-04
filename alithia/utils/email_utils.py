@@ -8,8 +8,14 @@ from email.header import Header
 from email.mime.text import MIMEText
 from email.utils import formataddr, parseaddr
 
+from cogents_core.utils import get_logger
 
-def send_email(sender: str, receiver: str, password: str, smtp_server: str, smtp_port: int, html_content: str) -> bool:
+logger = get_logger(__name__)
+
+
+def send_email(
+    sender: str, receiver: str, password: str, smtp_server: str, smtp_port: int, html_content: str, subject: str = None
+) -> bool:
     """
     Send email via SMTP.
 
@@ -20,12 +26,14 @@ def send_email(sender: str, receiver: str, password: str, smtp_server: str, smtp
         smtp_server: SMTP server address
         smtp_port: SMTP server port
         html_content: HTML content to send
+        subject: Email subject (optional, defaults to "Daily arXiv {date}")
 
     Returns:
         True if email sent successfully, False otherwise
     """
     if sender == "" or receiver == "" or password == "" or smtp_server == "" or smtp_port == 0:
-        raise Exception("Email configuration is not set correctly")
+        logger.error("Email configuration is incomplete or invalid")
+        return False
 
     def _format_addr(s):
         name, addr = parseaddr(s)
@@ -35,16 +43,22 @@ def send_email(sender: str, receiver: str, password: str, smtp_server: str, smtp
     msg["From"] = _format_addr(f"Github Action <{sender}>")
     msg["To"] = _format_addr(f"You <{receiver}>")
 
-    today = datetime.now().strftime("%Y/%m/%d")
-    msg["Subject"] = Header(f"Daily arXiv {today}", "utf-8").encode()
+    if subject is None:
+        today = datetime.now().strftime("%Y/%m/%d")
+        subject = f"Daily arXiv {today}"
+
+    msg["Subject"] = Header(subject, "utf-8").encode()
 
     server = None
     try:
+        logger.info(f"Connecting to SMTP server {smtp_server}:{smtp_port} (TLS)...")
         server = smtplib.SMTP(smtp_server, smtp_port, timeout=30)
         server.ehlo()
         server.starttls()
         server.ehlo()
+        logger.info("Connected successfully with TLS")
     except Exception as e:
+        logger.warning(f"TLS connection failed: {e}, trying SSL...")
         if server:
             try:
                 server.quit()
@@ -53,15 +67,23 @@ def send_email(sender: str, receiver: str, password: str, smtp_server: str, smtp
         try:
             server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=30)
             server.ehlo()
+            logger.info("Connected successfully with SSL")
         except Exception as ssl_error:
-            raise Exception(f"Failed to connect to SMTP server: {e} (TLS) and {ssl_error} (SSL)")
+            logger.error(f"Failed to connect to SMTP server: TLS error: {e}, SSL error: {ssl_error}")
+            return False
 
     try:
+        logger.info(f"Logging in as {sender}...")
         server.login(sender, password)
+        logger.info("Login successful")
+        
+        logger.info(f"Sending email to {receiver} with subject: {subject}")
         server.sendmail(sender, [receiver], msg.as_string())
+        logger.info("Email sent successfully")
         return True
     except Exception as e:
-        raise Exception(f"Unexpected error during email sending: {e}")
+        logger.error(f"Failed to send email: {e}")
+        return False
     finally:
         if server:
             try:
