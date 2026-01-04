@@ -37,13 +37,7 @@ jobs:
       env:
         ALITHIA_CONFIG_JSON: ${{ secrets.ALITHIA_CONFIG_JSON }}
       run: |
-        if [ -z "$ALITHIA_CONFIG_JSON" ]; then
-          echo "❌ Error: ALITHIA_CONFIG_JSON secret is not set"
-          exit 1
-        fi
-        echo "$ALITHIA_CONFIG_JSON" > paperscout_config.json
-        uv run python -m alithia.run paperscout_agent --config paperscout_config.json
-        rm -rf paperscout_config.json
+        ./scripts/run_paperscout.sh
 
     - name: Upload logs on failure
       if: failure()

@@ -26,8 +26,8 @@ jobs:
       env:
         ALITHIA_CONFIG_JSON: ${{ secrets.ALITHIA_CONFIG_JSON }}
       run: |
+        # Create and modify config for debug mode
         echo "$ALITHIA_CONFIG_JSON" > paperscout_config_test.json
-        # Modify config to enable debug mode
         python -c "
         import json
         with open('paperscout_config_test.json', 'r') as f:
@@ -37,5 +37,5 @@ jobs:
         with open('paperscout_config_test.json', 'w') as f:
             json.dump(config, f, indent=2)
         "
-        uv run python -m alithia.run paperscout_agent --config paperscout_config_test.json
-        rm -rf paperscout_config_test.json
+        CONFIG_FILE=paperscout_config_test.json ./scripts/run_paperscout.sh
+        rm -f paperscout_config_test.json
