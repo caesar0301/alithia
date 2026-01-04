@@ -1,7 +1,16 @@
 name: Daily Papers (Debug)
 
 on:
-  workflow_dispatch:  # Manual trigger only for testing
+  workflow_dispatch:
+    inputs:
+      from_date:
+        description: 'Start date for paper search (YYYY-MM-DD)'
+        required: false
+        type: string
+      to_date:
+        description: 'End date for paper search (YYYY-MM-DD)'
+        required: false
+        type: string
 
 jobs:
   test-paperscout-agent:
@@ -22,12 +31,9 @@ jobs:
     - name: Install dependencies
       run: uv sync --extra default
 
-    - name: Run PaperScout Agent (Debug Mode)
-      env:
-        ALITHIA_CONFIG_JSON: ${{ secrets.ALITHIA_CONFIG_JSON }}
+    - name: Create test configuration file
       run: |
-        # Create and modify config for debug mode
-        echo "$ALITHIA_CONFIG_JSON" > paperscout_config_test.json
+        echo '${{ secrets.ALITHIA_CONFIG_JSON }}' > paperscout_config_test.json
         python -c "
         import json
         with open('paperscout_config_test.json', 'r') as f:
@@ -37,5 +43,19 @@ jobs:
         with open('paperscout_config_test.json', 'w') as f:
             json.dump(config, f, indent=2)
         "
-        CONFIG_FILE=paperscout_config_test.json ./scripts/run_paperscout.sh
+
+    - name: Run PaperScout Agent (Debug Mode)
+      run: |
+        ARGS="--config paperscout_config_test.json"
+        if [ -n "${{ inputs.from_date }}" ]; then
+          ARGS="$ARGS --from-date ${{ inputs.from_date }}"
+        fi
+        if [ -n "${{ inputs.to_date }}" ]; then
+          ARGS="$ARGS --to-date ${{ inputs.to_date }}"
+        fi
+        ./scripts/run_paperscout.sh $ARGS
+
+    - name: Clean up configuration
+      if: always()
+      run: |
         rm -f paperscout_config_test.json
