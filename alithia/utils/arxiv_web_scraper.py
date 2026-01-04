@@ -78,76 +78,63 @@ class ArxivWebScraper:
         page_size = ARXIV_PAGE_SIZE  # ArXiv default page size
 
         try:
-            while len(papers) < max_results:
-                # Construct search URL
-                # ArXiv search format: /search/?query=cat:cs.AI&searchtype=all&start=0
-                search_url = self._build_search_url(arxiv_query, start)
+            # Note: /list endpoint doesn't support pagination, so we only fetch once
+            list_url = self._build_search_url(arxiv_query, start)
 
-                logger.info(f"Scraping URL: {search_url}")
+            logger.info(f"Scraping URL: {list_url}")
 
-                # Fetch page
-                response = self.session.get(search_url, timeout=self.timeout)
-                response.raise_for_status()
+            # Fetch page
+            response = self.session.get(list_url, timeout=self.timeout)
+            response.raise_for_status()
 
-                # Parse results
-                page_papers = self._parse_search_results(response.text)
+            # Parse results
+            papers = self._parse_search_results(response.text)
 
-                if not page_papers:
-                    logger.info("No more papers found, stopping pagination")
-                    break
+            if not papers:
+                logger.info("No papers found")
+                return []
 
-                # Filter by date if specified
-                if from_date or to_date:
-                    page_papers = self._filter_by_date(page_papers, from_date, to_date)
+            # Filter by date if specified
+            if from_date or to_date:
+                papers = self._filter_by_date(papers, from_date, to_date)
 
-                papers.extend(page_papers)
-
-                # Check if we've reached the limit
-                if len(papers) >= max_results:
-                    papers = papers[:max_results]
-                    break
-
-                # Move to next page
-                start += page_size
-
-                # Avoid overwhelming the server
-                import time
-
-                time.sleep(1)
+            # Limit to max_results
+            if len(papers) > max_results:
+                papers = papers[:max_results]
 
             logger.info(f"Scraped {len(papers)} papers from ArXiv")
             return papers
 
         except Exception as e:
             logger.error(f"Error scraping ArXiv: {e}")
-            return papers  # Return what we have so far
+            return []  # Return empty list on error
 
     def _build_search_url(self, arxiv_query: str, start: int = 0) -> str:
         """
         Build ArXiv search URL.
 
         Args:
-            arxiv_query: Category query (e.g., "cs.AI+cs.CV")
-            start: Starting index for pagination
+            arxiv_query: Category query (e.g., "cs.AI" or "cs.AI+cs.CV")
+            start: Starting index for pagination (Note: ArXiv search no longer supports pagination)
 
         Returns:
             Complete search URL
         """
-        # Convert category format (cs.AI+cs.CV) to search query
-        categories = arxiv_query.split("+")
+        # ArXiv search accepts category queries directly (e.g., "cs.AI")
+        # Note: ArXiv search no longer accepts 'start' or 'size' parameters
+        # It returns a default page of results (typically 50)
 
-        # Build query string for ArXiv search
-        # Format: cat:cs.AI OR cat:cs.CV
-        query_parts = [f"cat:{cat.strip()}" for cat in categories]
-        query = " OR ".join(query_parts)
+        # For multi-category queries, use "+" to join them
+        # ArXiv interprets "cs.AI+cs.CV" as papers in either category
 
-        # URL encode the query
-        from urllib.parse import quote
+        if start > 0:
+            logger.warning(
+                f"ArXiv /search endpoint doesn't support pagination (start={start} ignored). "
+                f"Only the first page of results will be returned (~50 papers)."
+            )
 
-        encoded_query = quote(query)
-
-        # Construct full URL
-        url = f"{self.base_url}/search/?query={encoded_query}&searchtype=all&start={start}&size={ARXIV_PAGE_SIZE}"
+        # Construct search URL (no encoding needed for simple category queries)
+        url = f"{self.base_url}/search/?query={arxiv_query}&searchtype=all"
         return url
 
     def _parse_search_results(self, html: str) -> List[ArxivPaper]:
@@ -165,13 +152,12 @@ class ArxivWebScraper:
         try:
             soup = BeautifulSoup(html, "html.parser")
 
-            # Find all paper entries
-            # ArXiv uses <li class="arxiv-result"> for each paper
-            results = soup.find_all("li", class_="arxiv-result")
+            # ArXiv search results use <li class="arxiv-result"> for each paper
+            result_items = soup.find_all("li", class_="arxiv-result")
 
-            for result in results:
+            for item in result_items:
                 try:
-                    paper = self._parse_paper_entry(result)
+                    paper = self._parse_paper_entry_search(item)
                     if paper:
                         papers.append(paper)
                 except Exception as e:
@@ -182,6 +168,158 @@ class ArxivWebScraper:
             logger.error(f"Error parsing search results: {e}")
 
         return papers
+
+    def _parse_paper_entry_search(self, item) -> Optional[ArxivPaper]:
+        """
+        Parse a paper from ArXiv search results (li.arxiv-result structure).
+
+        Args:
+            item: BeautifulSoup element for <li class="arxiv-result"> tag
+
+        Returns:
+            ArxivPaper object or None if parsing fails
+        """
+        try:
+            # Extract ArXiv ID from the list-title link
+            list_title = item.find("p", class_="list-title")
+            if not list_title:
+                return None
+
+            arxiv_link = list_title.find("a")
+            if not arxiv_link:
+                return None
+
+            href = arxiv_link.get("href", "")
+            arxiv_id_match = re.search(r"/abs/(\d+\.\d+)", href)
+            if not arxiv_id_match:
+                return None
+
+            arxiv_id = arxiv_id_match.group(1)
+
+            # Extract title (has multiple classes: "title is-5 mathjax")
+            # Use lambda to match any element with "title" in its class list
+            title_elem = item.find("p", class_=lambda x: x and "title" in x.split())
+            if not title_elem:
+                return None
+            title = title_elem.get_text(strip=True)
+
+            # Extract authors
+            authors_elem = item.find("p", class_="authors")
+            authors = []
+            if authors_elem:
+                author_links = authors_elem.find_all("a")
+                authors = [a.get_text(strip=True) for a in author_links]
+
+            # Extract abstract (search results don't show abstracts, only list view does)
+            # We'll leave summary empty for search results
+            summary = ""
+
+            # Try to extract submission date from the list-comments section if present
+            comments_elem = item.find("p", class_="is-size-7")
+            published_date = None
+            if comments_elem:
+                date_text = comments_elem.get_text()
+                # Try to find date in format "Submitted DD MMM YYYY"
+                date_match = re.search(r"Submitted\s+(\d+\s+\w+\s+\d{4})", date_text)
+                if date_match:
+                    try:
+                        published_date = datetime.strptime(date_match.group(1), "%d %b %Y")
+                    except ValueError:
+                        pass
+
+            # Construct PDF URL
+            pdf_url = f"{self.base_url}/pdf/{arxiv_id}.pdf"
+
+            paper = ArxivPaper(
+                title=title,
+                summary=summary,
+                authors=authors,
+                arxiv_id=arxiv_id,
+                pdf_url=pdf_url,
+                published_date=published_date,
+            )
+
+            return paper
+
+        except Exception as e:
+            logger.warning(f"Error parsing search result entry: {e}")
+            return None
+
+    def _parse_paper_entry_list(self, dt, dd) -> Optional[ArxivPaper]:
+        """
+        Parse a paper from ArXiv /list/ endpoint (dt/dd structure).
+
+        Args:
+            dt: BeautifulSoup element for <dt> tag
+            dd: BeautifulSoup element for <dd> tag
+
+        Returns:
+            ArxivPaper object or None if parsing fails
+        """
+        try:
+            # Extract ArXiv ID from dt
+            abs_link = dt.find("a", href=re.compile(r"/abs/"))
+            if not abs_link:
+                return None
+
+            href = abs_link.get("href", "")
+            arxiv_id_match = re.search(r"/abs/(\d+\.\d+)", href)
+            if not arxiv_id_match:
+                return None
+
+            arxiv_id = arxiv_id_match.group(1)
+
+            # Extract title from dd
+            title_div = dd.find("div", class_="list-title")
+            if not title_div:
+                return None
+
+            title = title_div.get_text(strip=True)
+            # Remove "Title:" prefix if present
+            title = re.sub(r"^Title:\s*", "", title)
+
+            # Extract authors from dd
+            authors_div = dd.find("div", class_="list-authors")
+            authors = []
+            if authors_div:
+                # Authors are in <a> tags
+                author_links = authors_div.find_all("a")
+                authors = [a.get_text(strip=True) for a in author_links]
+
+            # Try to extract submission date from comments
+            comments_div = dd.find("div", class_="list-comments")
+            published_date = None
+            if comments_div:
+                comment_text = comments_div.get_text()
+                # Try to find date in format "DD MMM YYYY"
+                date_match = re.search(r"(\d+\s+\w+\s+\d{4})", comment_text)
+                if date_match:
+                    try:
+                        published_date = datetime.strptime(date_match.group(1), "%d %b %Y")
+                    except ValueError:
+                        pass
+
+            # Construct PDF URL
+            pdf_url = f"{self.base_url}/pdf/{arxiv_id}.pdf"
+
+            # Note: The /list/ endpoint doesn't show full abstracts
+            # Abstract is empty here - use individual paper scraping for that
+            summary = ""
+
+            paper = ArxivPaper(
+                title=title,
+                summary=summary,
+                authors=authors,
+                arxiv_id=arxiv_id,
+                pdf_url=pdf_url,
+                published_date=published_date,
+            )
+
+            return paper
+
+        except Exception as e:
+            logger.warning(f"Error parsing list paper entry: {e}")
+            return None
 
     def _parse_paper_entry(self, entry) -> Optional[ArxivPaper]:
         """

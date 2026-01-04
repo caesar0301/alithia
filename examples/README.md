@@ -2,6 +2,62 @@
 
 This directory contains examples demonstrating key components of the Alithia research recommendation system.
 
+## ArXiv Web Scraper Validation
+
+A comprehensive validation suite for the ArXiv web scraper fallback mechanism.
+
+### Requirements
+
+Before running, ensure dependencies are installed:
+
+```bash
+pip install beautifulsoup4 requests
+pip install -e .
+```
+
+Or with uv:
+```bash
+uv pip install beautifulsoup4 requests
+uv pip install -e .
+```
+
+### Running the Validation
+
+```bash
+python examples/arxiv_web_scraper_validation.py
+```
+
+Or with uv:
+```bash
+uv run python examples/arxiv_web_scraper_validation.py
+```
+
+### What It Tests
+
+This validation suite runs 7 comprehensive tests:
+
+1. **Basic Search**: Validates single-category searches work correctly
+2. **Multiple Categories**: Tests searching across multiple ArXiv categories (e.g., cs.AI+cs.CV+cs.LG)
+3. **Date Filtering**: Verifies date range filtering functionality
+4. **Pagination**: Tests retrieving results across multiple pages
+5. **Paper Details**: Validates scraping individual paper details by ArXiv ID
+6. **Error Handling**: Ensures graceful handling of invalid inputs
+7. **Performance**: Benchmarks scraping speed and efficiency
+
+### Expected Output
+
+- All tests should pass with ✅ indicators
+- Performance should be under 30 seconds for 20 papers
+- Displays sample papers with titles, authors, abstracts, and metadata
+- Final summary shows overall validation status
+
+### When to Use
+
+- **After Updates**: Run after modifying web scraper code
+- **Network Issues**: Test when API/RSS feed methods fail
+- **Debugging**: Diagnose scraping problems with detailed logging
+- **Integration Testing**: Verify scraper works in your environment
+
 ## ArXiv Yesterday Papers Diagnostic
 
 This diagnostic tool helps investigate why yesterday's ArXiv query might return 0 papers.
