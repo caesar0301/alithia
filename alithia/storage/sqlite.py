@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 
 from cogents_core.utils import get_logger
 
+from alithia.constants import DEFAULT_QUERY_HISTORY_LIMIT, DEFAULT_SQLITE_PATH
+
 from .base import StorageBackend
 
 logger = get_logger(__name__)
@@ -19,7 +21,7 @@ logger = get_logger(__name__)
 class SQLiteStorage(StorageBackend):
     """SQLite implementation of storage backend (fallback)."""
 
-    def __init__(self, db_path: str = "data/alithia.db"):
+    def __init__(self, db_path: str = DEFAULT_SQLITE_PATH):
         """
         Initialize SQLite storage.
 
@@ -557,7 +559,9 @@ class SQLiteStorage(StorageBackend):
             self.conn.rollback()
             raise
 
-    def get_query_history(self, user_id: str, paper_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_query_history(
+        self, user_id: str, paper_id: Optional[str] = None, limit: int = DEFAULT_QUERY_HISTORY_LIMIT
+    ) -> List[Dict[str, Any]]:
         """Get query history."""
         try:
             cursor = self.conn.cursor()

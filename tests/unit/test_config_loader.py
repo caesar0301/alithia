@@ -172,15 +172,18 @@ def test_build_config_from_envs_integer_conversion():
     """Test that integer values are correctly converted."""
     env_vars = {
         "ALITHIA_SMTP_PORT": "587",
-        "ALITHIA_MAX_PAPER_NUM": "50",
+        "ALITHIA_MAX_PAPERS": "50",
+        "ALITHIA_MAX_PAPERS_QUERIED": "200",
     }
 
     with mock.patch.dict(os.environ, env_vars, clear=False):
         config = _build_config_from_envs()
         assert config["researcher_profile"]["email_notification"]["smtp_port"] == 587
         assert config["paperscout_agent"]["max_papers"] == 50
+        assert config["paperscout_agent"]["max_papers_queried"] == 200
         assert isinstance(config["researcher_profile"]["email_notification"]["smtp_port"], int)
         assert isinstance(config["paperscout_agent"]["max_papers"], int)
+        assert isinstance(config["paperscout_agent"]["max_papers_queried"], int)
 
 
 @pytest.mark.unit
@@ -483,6 +486,7 @@ def test_load_config_paperscout_settings():
         "paperscout_agent": {
             "query": "cs.AI+cs.CV",
             "max_papers": 50,
+            "max_papers_queried": 200,
             "send_empty": False,
             "ignore_patterns": ["pattern1", "pattern2"],
         }
@@ -495,7 +499,8 @@ def test_load_config_paperscout_settings():
     try:
         env_vars = {
             "ALITHIA_ARXIV_QUERY": "cs.LG",
-            "ALITHIA_MAX_PAPER_NUM": "100",
+            "ALITHIA_MAX_PAPERS": "100",
+            "ALITHIA_MAX_PAPERS_QUERIED": "300",
             "ALITHIA_SEND_EMPTY": "true",
             "ALITHIA_ZOTERO_IGNORE": "ignore1,ignore2",
         }
@@ -506,6 +511,7 @@ def test_load_config_paperscout_settings():
             # Environment variables should override file config
             assert config["paperscout_agent"]["query"] == "cs.LG"
             assert config["paperscout_agent"]["max_papers"] == 100
+            assert config["paperscout_agent"]["max_papers_queried"] == 300
             assert config["paperscout_agent"]["send_empty"] is True
             assert config["paperscout_agent"]["ignore_patterns"] == ["ignore1", "ignore2"]
     finally:

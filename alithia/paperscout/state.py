@@ -8,6 +8,12 @@ from typing import Annotated, Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from alithia.constants import (
+    ALITHIA_MAX_PAPERS,
+    ALITHIA_MAX_PAPERS_QUERIED,
+    DEFAULT_ARXIV_QUERY,
+    DEFAULT_SEND_EMPTY,
+)
 from alithia.researcher import ResearcherProfile
 
 from .models import ArxivPaper, EmailContent, ScoredPaper
@@ -20,9 +26,10 @@ class PaperScoutConfig(BaseModel):
     user_profile: ResearcherProfile
 
     # Agent Config
-    query: str = "cs.AI+cs.CV+cs.LG+cs.CL"
-    max_papers: int = 50
-    send_empty: bool = False
+    query: str = DEFAULT_ARXIV_QUERY
+    max_papers: int = ALITHIA_MAX_PAPERS
+    max_papers_queried: int = ALITHIA_MAX_PAPERS_QUERIED
+    send_empty: bool = DEFAULT_SEND_EMPTY
     ignore_patterns: List[str] = Field(default_factory=list)
 
     # Date Range (YYYY-MM-DD format, None defaults to yesterday)

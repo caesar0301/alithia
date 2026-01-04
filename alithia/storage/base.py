@@ -7,6 +7,8 @@ Defines the interface that all storage backends must implement.
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from alithia.constants import DEFAULT_QUERY_HISTORY_LIMIT
+
 
 class StorageBackend(ABC):
     """Abstract base class for stateful storage backends."""
@@ -190,7 +192,9 @@ class StorageBackend(ABC):
         """
 
     @abstractmethod
-    def get_query_history(self, user_id: str, paper_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_query_history(
+        self, user_id: str, paper_id: Optional[str] = None, limit: int = DEFAULT_QUERY_HISTORY_LIMIT
+    ) -> List[Dict[str, Any]]:
         """
         Get query history.
 

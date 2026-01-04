@@ -118,6 +118,12 @@ Examples:
 def run_paperscout_agent(args):
     """Run the paperscout agent."""
     from alithia.config_loader import load_config
+    from alithia.constants import (
+        ALITHIA_MAX_PAPERS,
+        ALITHIA_MAX_PAPERS_QUERIED,
+        DEFAULT_ARXIV_QUERY,
+        DEFAULT_SEND_EMPTY,
+    )
     from alithia.paperscout.agent import PaperScoutAgent
     from alithia.paperscout.state import PaperScoutConfig
     from alithia.researcher.profile import ResearcherProfile
@@ -135,9 +141,10 @@ def run_paperscout_agent(args):
 
         config = PaperScoutConfig(
             user_profile=ResearcherProfile.from_config(config_dict),
-            query=paperscout_settings.get("query", "cs.AI+cs.CV+cs.LG+cs.CL"),
-            max_papers=paperscout_settings.get("max_papers", 50),
-            send_empty=paperscout_settings.get("send_empty", False),
+            query=paperscout_settings.get("query", DEFAULT_ARXIV_QUERY),
+            max_papers=paperscout_settings.get("max_papers", ALITHIA_MAX_PAPERS),
+            max_papers_queried=paperscout_settings.get("max_papers_queried", ALITHIA_MAX_PAPERS_QUERIED),
+            send_empty=paperscout_settings.get("send_empty", DEFAULT_SEND_EMPTY),
             ignore_patterns=paperscout_settings.get("ignore_patterns", []),
             from_date=from_date,
             to_date=to_date,

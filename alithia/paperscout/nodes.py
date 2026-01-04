@@ -190,7 +190,7 @@ def data_collection_node(state: AgentState) -> dict:
                 arxiv_query=state.config.query,
                 from_time=from_time,
                 to_time=to_time,
-                max_results=200,
+                max_results=state.config.max_papers_queried,
                 debug=state.debug_mode,
                 max_retries=3,
                 enable_web_fallback=True,

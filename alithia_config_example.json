@@ -48,7 +48,8 @@
     },
     "paperscout_agent": {
         "query": "cs.AI+cs.CV+cs.LG+cs.CL",
-        "max_papers": 50,
+        "max_papers": 25,
+        "max_papers_queried": 500,
         "send_empty": false,
         "ignore_patterns": []
     },

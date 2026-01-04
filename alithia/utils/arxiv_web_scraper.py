@@ -13,6 +13,7 @@ from typing import List, Optional
 import requests
 from bs4 import BeautifulSoup
 
+from alithia.constants import ARXIV_PAGE_SIZE, DEFAULT_ARXIV_MAX_RESULTS, DEFAULT_REQUEST_TIMEOUT
 from alithia.models import ArxivPaper
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class ArxivWebScraper:
     def __init__(
         self,
         session: Optional[requests.Session] = None,
-        timeout: int = 30,
+        timeout: int = DEFAULT_REQUEST_TIMEOUT,
         user_agent: str = "AlithiaResearchAssistant/1.0",
     ):
         """
@@ -56,7 +57,7 @@ class ArxivWebScraper:
     def scrape_arxiv_search(
         self,
         arxiv_query: str,
-        max_results: int = 200,
+        max_results: int = DEFAULT_ARXIV_MAX_RESULTS,
         from_date: Optional[datetime] = None,
         to_date: Optional[datetime] = None,
     ) -> List[ArxivPaper]:
@@ -74,7 +75,7 @@ class ArxivWebScraper:
         """
         papers = []
         start = 0
-        page_size = 50  # ArXiv default page size
+        page_size = ARXIV_PAGE_SIZE  # ArXiv default page size
 
         try:
             while len(papers) < max_results:
@@ -146,7 +147,7 @@ class ArxivWebScraper:
         encoded_query = quote(query)
 
         # Construct full URL
-        url = f"{self.base_url}/search/?query={encoded_query}&searchtype=all&start={start}&size=50"
+        url = f"{self.base_url}/search/?query={encoded_query}&searchtype=all&start={start}&size={ARXIV_PAGE_SIZE}"
         return url
 
     def _parse_search_results(self, html: str) -> List[ArxivPaper]:

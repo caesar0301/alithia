@@ -35,6 +35,14 @@ import feedparser
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
+from alithia.constants import (
+    ARXIV_BATCH_SIZE,
+    DEBUG_MAX_PAPERS,
+    DEFAULT_ARXIV_MAX_RESULTS,
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_REQUEST_TIMEOUT,
+    DEFAULT_RETRY_DELAY,
+)
 from alithia.models import ArxivPaper
 
 logger = logging.getLogger(__name__)
@@ -135,9 +143,9 @@ class ArxivPaperFetcher:
 
     def __init__(
         self,
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
-        timeout: int = 30,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        retry_delay: float = DEFAULT_RETRY_DELAY,
+        timeout: int = DEFAULT_REQUEST_TIMEOUT,
         enable_web_fallback: bool = True,
     ):
         """
@@ -174,7 +182,7 @@ class ArxivPaperFetcher:
         arxiv_query: str,
         from_time: Optional[str] = None,
         to_time: Optional[str] = None,
-        max_results: int = 200,
+        max_results: int = DEFAULT_ARXIV_MAX_RESULTS,
         debug: bool = False,
     ) -> FetchResult:
         """
@@ -193,8 +201,8 @@ class ArxivPaperFetcher:
         start_time = time.time()
 
         if debug:
-            logger.info(f"Debug mode: limiting results to 5 papers")
-            max_results = 5
+            logger.info(f"Debug mode: limiting results to {DEBUG_MAX_PAPERS} papers")
+            max_results = DEBUG_MAX_PAPERS
 
         # Strategy 1: Try API search with date range (if dates provided)
         if from_time and to_time:
@@ -355,7 +363,7 @@ class ArxivPaperFetcher:
 
                 # Fetch paper details in batches
                 papers = []
-                batch_size = 50
+                batch_size = ARXIV_BATCH_SIZE
 
                 for i in range(0, len(paper_ids), batch_size):
                     batch_ids = paper_ids[i : i + batch_size]
@@ -434,7 +442,7 @@ def get_arxiv_papers_search(
     arxiv_query: str,
     from_time: str,
     to_time: str,
-    max_results: int = 200,
+    max_results: int = DEFAULT_ARXIV_MAX_RESULTS,
     debug: bool = False,
 ) -> List[ArxivPaper]:
     """
@@ -447,8 +455,8 @@ def get_arxiv_papers_search(
         arxiv_query: ArXiv query string with categories separated by '+' (e.g., "cs.AI+cs.CV+cs.LG+cs.CL")
         from_time: Start time in format YYYYMMDDHHMM (e.g., "202510250000")
         to_time: End time in format YYYYMMDDHHMM (e.g., "202510252359")
-        max_results: Maximum number of results to return (default: 200)
-        debug: If True, limit to 5 papers for debugging
+        max_results: Maximum number of results to return (default: DEFAULT_ARXIV_MAX_RESULTS)
+        debug: If True, limit to DEBUG_MAX_PAPERS papers for debugging
 
     Returns:
         List of ArxivPaper objects matching the search criteria
@@ -458,11 +466,11 @@ def get_arxiv_papers_search(
         ...     arxiv_query="cs.AI+cs.CV+cs.LG+cs.CL",
         ...     from_time="202510250000",
         ...     to_time="202510252359",
-        ...     max_results=200
+        ...     max_results=DEFAULT_ARXIV_MAX_RESULTS
         ... )
     """
     if debug:
-        max_results = 5
+        max_results = DEBUG_MAX_PAPERS
 
     fetcher = ArxivPaperFetcher(enable_web_fallback=False)
     result = fetcher._fetch_with_api_search(
@@ -485,12 +493,12 @@ def get_arxiv_papers_feed(arxiv_query: str, debug: bool = False) -> List[ArxivPa
 
     Args:
         arxiv_query: ArXiv query string (e.g., "cs.AI+cs.CV")
-        debug: If True, limit to 5 papers but still use the actual query
+        debug: If True, limit to DEBUG_MAX_PAPERS papers but still use the actual query
 
     Returns:
         List of ArxivPaper objects
     """
-    max_results = 5 if debug else 200
+    max_results = DEBUG_MAX_PAPERS if debug else DEFAULT_ARXIV_MAX_RESULTS
 
     if debug:
         logger.info(f"Debug mode: limiting results to {max_results} papers")
@@ -510,9 +518,9 @@ def fetch_arxiv_papers(
     arxiv_query: str,
     from_time: Optional[str] = None,
     to_time: Optional[str] = None,
-    max_results: int = 200,
+    max_results: int = DEFAULT_ARXIV_MAX_RESULTS,
     debug: bool = False,
-    max_retries: int = 3,
+    max_retries: int = DEFAULT_MAX_RETRIES,
     enable_web_fallback: bool = True,
 ) -> List[ArxivPaper]:
     """
@@ -523,7 +531,7 @@ def fetch_arxiv_papers(
         from_time: Start time in format YYYYMMDDHHMM
         to_time: End time in format YYYYMMDDHHMM
         max_results: Maximum number of results
-        debug: Debug mode (limits results to 5)
+        debug: Debug mode (limits results to DEBUG_MAX_PAPERS)
         max_retries: Maximum retries per strategy
         enable_web_fallback: Enable web scraping fallback
 

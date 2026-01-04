@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from cogents_core.utils import get_logger
 
+from alithia.constants import DEFAULT_QUERY_HISTORY_LIMIT
 from alithia.utils.supabase_client import SupabaseClientManager
 
 from .base import StorageBackend
@@ -385,7 +386,9 @@ class SupabaseStorage(StorageBackend):
             logger.error(f"Failed to save query: {e}")
             raise
 
-    def get_query_history(self, user_id: str, paper_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_query_history(
+        self, user_id: str, paper_id: Optional[str] = None, limit: int = DEFAULT_QUERY_HISTORY_LIMIT
+    ) -> List[Dict[str, Any]]:
         """Get query history."""
         try:
             filters = {"user_id": user_id}

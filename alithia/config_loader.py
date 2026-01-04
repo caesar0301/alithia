@@ -119,7 +119,8 @@ def _build_config_from_envs() -> Dict[str, Any]:
         "storage.user_id": "ALITHIA_STORAGE_USER_ID",
         # PaperScout agent settings
         "paperscout_agent.query": "ALITHIA_ARXIV_QUERY",
-        "paperscout_agent.max_papers": "ALITHIA_MAX_PAPER_NUM",
+        "paperscout_agent.max_papers": "ALITHIA_MAX_PAPERS",
+        "paperscout_agent.max_papers_queried": "ALITHIA_MAX_PAPERS_QUERIED",
         "paperscout_agent.send_empty": "ALITHIA_SEND_EMPTY",
         "paperscout_agent.ignore_patterns": "ALITHIA_ZOTERO_IGNORE",
         # General settings
@@ -130,7 +131,11 @@ def _build_config_from_envs() -> Dict[str, Any]:
         value = get_env(env_key)
         if value is not None:
             # Convert string values to appropriate types
-            if config_key in ["researcher_profile.email_notification.smtp_port", "paperscout_agent.max_papers"]:
+            if config_key in [
+                "researcher_profile.email_notification.smtp_port",
+                "paperscout_agent.max_papers",
+                "paperscout_agent.max_papers_queried",
+            ]:
                 try:
                     value = int(value)
                 except ValueError:
