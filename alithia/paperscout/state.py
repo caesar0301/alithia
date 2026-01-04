@@ -25,6 +25,10 @@ class PaperScoutConfig(BaseModel):
     send_empty: bool = False
     ignore_patterns: List[str] = Field(default_factory=list)
 
+    # Date Range (YYYY-MM-DD format, None defaults to yesterday)
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
+
     debug: bool = False
 
 

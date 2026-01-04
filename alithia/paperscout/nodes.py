@@ -141,19 +141,35 @@ def data_collection_node(state: AgentState) -> dict:
             corpus = filter_corpus(corpus, ignore_patterns)
             logger.info(f"Filtered corpus: {len(corpus)} papers remaining")
 
-        # Get ArXiv papers from last day (00:00 to 24:00)
-        logger.info("Retrieving ArXiv papers from last day...")
+        # Get ArXiv papers for date range (00:00 to 24:00)
+        # Use config dates if provided, otherwise default to yesterday
+        if state.config.from_date:
+            try:
+                from_dt = datetime.strptime(state.config.from_date, "%Y-%m-%d")
+                # If to_date is not provided, use from_date (single day query)
+                if state.config.to_date:
+                    to_dt = datetime.strptime(state.config.to_date, "%Y-%m-%d")
+                    logger.info(f"Using configured date range: {state.config.from_date} to {state.config.to_date}")
+                else:
+                    to_dt = from_dt
+                    logger.info(f"Using configured date: {state.config.from_date} (single day)")
+            except ValueError as e:
+                logger.error(f"Invalid date format in config: {e}. Using default (yesterday).")
+                from_dt = datetime.now() - timedelta(days=1)
+                to_dt = from_dt
+        else:
+            # Default to yesterday
+            from_dt = datetime.now() - timedelta(days=1)
+            to_dt = from_dt
+            logger.info("Using default date range (yesterday)")
 
-        # Calculate yesterday's date range (00:00 to 24:00)
-        yesterday = datetime.now() - timedelta(days=1)
-        from_date = yesterday.strftime("%Y%m%d")
-        to_date = yesterday.strftime("%Y%m%d")
+        from_date = from_dt.strftime("%Y%m%d")
+        to_date = to_dt.strftime("%Y%m%d")
         from_time = from_date + "0000"
         to_time = to_date + "2359"
 
         logger.info(
-            f"Date range: {from_time} to {to_time} "
-            f"(yesterday: {yesterday.strftime('%Y-%m-%d')}, today: {datetime.now().strftime('%Y-%m-%d')})"
+            f"Date range: {from_time} to {to_time} " f"({from_dt.strftime('%Y-%m-%d')} to {to_dt.strftime('%Y-%m-%d')})"
         )
         logger.info(f"Query categories: {state.config.query}")
 

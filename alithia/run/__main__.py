@@ -23,14 +23,27 @@ def create_paperscout_parser(subparsers):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run with environment variables
+  # Run with environment variables (defaults to yesterday)
   python -m alithia.run paperscout_agent
   
   # Run with configuration file
   python -m alithia.run paperscout_agent --config config.json
+  
+  # Run with custom date range
+  python -m alithia.run paperscout_agent --from-date 2024-01-01 --to-date 2024-01-07
         """,
     )
     parser.add_argument("-c", "--config", type=str, help="Configuration file path (JSON)")
+    parser.add_argument(
+        "--from-date",
+        type=str,
+        help="Start date for paper query (YYYY-MM-DD format). Defaults to yesterday if not specified.",
+    )
+    parser.add_argument(
+        "--to-date",
+        type=str,
+        help="End date for paper query (YYYY-MM-DD format). Defaults to from-date if not specified.",
+    )
     return parser
 
 
@@ -116,12 +129,18 @@ def run_paperscout_agent(args):
     try:
         paperscout_settings = config_dict.get("paperscout_agent", config_dict.get("arxrec", {}))
 
+        # CLI arguments override config file values
+        from_date = getattr(args, "from_date", None) or paperscout_settings.get("from_date")
+        to_date = getattr(args, "to_date", None) or paperscout_settings.get("to_date")
+
         config = PaperScoutConfig(
             user_profile=ResearcherProfile.from_config(config_dict),
             query=paperscout_settings.get("query", "cs.AI+cs.CV+cs.LG+cs.CL"),
             max_papers=paperscout_settings.get("max_papers", 50),
             send_empty=paperscout_settings.get("send_empty", False),
             ignore_patterns=paperscout_settings.get("ignore_patterns", []),
+            from_date=from_date,
+            to_date=to_date,
             debug=config_dict.get("debug", False),
         )
     except Exception as e:
