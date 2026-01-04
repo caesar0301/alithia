@@ -38,9 +38,9 @@ def test_build_search_url_single_category():
     url = scraper._build_search_url("cs.AI", start=0)
 
     assert "arxiv.org/search/" in url
-    assert "cat%3Acs.AI" in url  # URL encoded
-    assert "start=0" in url
-    assert "size=50" in url
+    assert "query=cs.AI" in url
+    assert "searchtype=all" in url
+    # Note: ArXiv no longer accepts start/size parameters
 
 
 @pytest.mark.unit
@@ -50,11 +50,9 @@ def test_build_search_url_multiple_categories():
     url = scraper._build_search_url("cs.AI+cs.CV+cs.LG", start=50)
 
     assert "arxiv.org/search/" in url
-    assert "cat%3Acs.AI" in url
-    assert "cat%3Acs.CV" in url
-    assert "cat%3Acs.LG" in url
-    assert "OR" in url
-    assert "start=50" in url
+    assert "query=cs.AI+cs.CV+cs.LG" in url or "query=cs.AI%2Bcs.CV%2Bcs.LG" in url
+    assert "searchtype=all" in url
+    # Note: ArXiv no longer accepts start/size parameters
 
 
 @pytest.mark.unit
@@ -301,7 +299,7 @@ def test_parse_search_results_empty():
 
 @pytest.mark.unit
 def test_scrape_arxiv_search_pagination():
-    """Test pagination during scraping."""
+    """Test that scraping makes only one request (no pagination support)."""
     scraper = ArxivWebScraper()
 
     from alithia.models import ArxivPaper
@@ -311,11 +309,10 @@ def test_scrape_arxiv_search_pagination():
     with (
         patch.object(scraper, "_parse_search_results") as mock_parse,
         patch.object(scraper.session, "get") as mock_get,
-        patch("time.sleep"),
-    ):  # Mock sleep to speed up test
+    ):
 
-        # First page returns papers, second page returns empty
-        mock_parse.side_effect = [[mock_paper], []]
+        # ArXiv search no longer supports pagination, so only one request is made
+        mock_parse.return_value = [mock_paper]
 
         mock_response = Mock()
         mock_response.text = "<html></html>"
@@ -324,8 +321,8 @@ def test_scrape_arxiv_search_pagination():
 
         papers = scraper.scrape_arxiv_search("cs.AI", max_results=100)
 
-        # Should have made 2 requests (one successful, one empty)
-        assert mock_get.call_count == 2
+        # Should have made only 1 request (no pagination)
+        assert mock_get.call_count == 1
         assert len(papers) == 1
 
 
@@ -336,31 +333,27 @@ def test_scrape_arxiv_search_respects_max_results():
 
     from alithia.models import ArxivPaper
 
-    # Create more papers than max_results
-    papers_page1 = [
+    # Create more papers than max_results (ArXiv returns ~50 per page)
+    papers_from_arxiv = [
         ArxivPaper(title=f"Paper {i}", summary="Abstract", authors=["Author"], arxiv_id=f"2312.0000{i}", pdf_url="url")
-        for i in range(50)
-    ]
-
-    papers_page2 = [
-        ArxivPaper(title=f"Paper {i}", summary="Abstract", authors=["Author"], arxiv_id=f"2312.0010{i}", pdf_url="url")
         for i in range(50)
     ]
 
     with (
         patch.object(scraper, "_parse_search_results") as mock_parse,
         patch.object(scraper.session, "get") as mock_get,
-        patch("time.sleep"),
     ):
 
-        mock_parse.side_effect = [papers_page1, papers_page2]
+        # ArXiv search returns all papers in one request (no pagination)
+        mock_parse.return_value = papers_from_arxiv
 
         mock_response = Mock()
         mock_response.text = "<html></html>"
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        papers = scraper.scrape_arxiv_search("cs.AI", max_results=75)
+        # Request fewer papers than ArXiv returns
+        papers = scraper.scrape_arxiv_search("cs.AI", max_results=25)
 
-        # Should stop at 75 papers
-        assert len(papers) == 75
+        # Should limit to max_results
+        assert len(papers) == 25
