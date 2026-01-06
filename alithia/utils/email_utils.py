@@ -26,7 +26,7 @@ def send_email(
         smtp_server: SMTP server address
         smtp_port: SMTP server port
         html_content: HTML content to send
-        subject: Email subject (optional, defaults to "Daily arXiv {date}")
+        subject: Email subject (optional, defaults to "Alithia Digest {date}")
 
     Returns:
         True if email sent successfully, False otherwise
@@ -45,7 +45,7 @@ def send_email(
 
     if subject is None:
         today = datetime.now().strftime("%Y/%m/%d")
-        subject = f"Daily arXiv {today}"
+        subject = f"Alithia Digest {today}"
 
     msg["Subject"] = Header(subject, "utf-8").encode()
 
