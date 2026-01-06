@@ -159,6 +159,29 @@ def create_empty_email_html() -> str:
     """
 
 
+def _get_digest_date(papers: List[ScoredPaper]) -> str:
+    """
+    Get the digest date from papers (latest published date) or current date.
+
+    Args:
+        papers: List of scored papers
+
+    Returns:
+        Date string in YYYY-MM-DD format
+    """
+    from datetime import datetime
+
+    if papers:
+        # Get the latest published date from papers
+        dates = [p.paper.published_date for p in papers if p.paper.published_date]
+        if dates:
+            latest_date = max(dates)
+            return latest_date.strftime("%Y-%m-%d")
+
+    # Fallback to current date
+    return datetime.now().strftime("%Y-%m-%d")
+
+
 def construct_email_content(papers: List[ScoredPaper]) -> EmailContent:
     """
     Construct complete email content from scored papers.
@@ -169,18 +192,21 @@ def construct_email_content(papers: List[ScoredPaper]) -> EmailContent:
     Returns:
         EmailContent object or string content
     """
+    digest_date = _get_digest_date(papers)
 
     if not papers:
         content = create_empty_email_html()
         return EmailContent(
-            subject="Daily arXiv - No Papers Today", html_content=EMAIL_TEMPLATE.format(content=content), papers=[]
+            subject=f"Alithia Digest {digest_date} - No Papers Today",
+            html_content=EMAIL_TEMPLATE.format(content=content),
+            papers=[],
         )
     else:
         paper_blocks = [create_paper_html(paper) for paper in papers]
         content = "<br>".join(paper_blocks)
 
         return EmailContent(
-            subject=f"Daily arXiv - {len(papers)} Papers",
+            subject=f"Alithia Digest {digest_date} - {len(papers)} Papers",
             html_content=EMAIL_TEMPLATE.format(content=content),
             papers=papers,
         )
