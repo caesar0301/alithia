@@ -176,10 +176,10 @@ def _get_digest_date(papers: List[ScoredPaper]) -> str:
         dates = [p.paper.published_date for p in papers if p.paper.published_date]
         if dates:
             latest_date = max(dates)
-            return latest_date.strftime("%Y-%m-%d")
+            return latest_date.strftime("%Y/%m/%d")
 
     # Fallback to current date
-    return datetime.now().strftime("%Y-%m-%d")
+    return datetime.now().strftime("%Y/%m/%d")
 
 
 def construct_email_content(papers: List[ScoredPaper]) -> EmailContent:

@@ -44,7 +44,7 @@ def send_email(
     msg["To"] = _format_addr(f"You <{receiver}>")
 
     if subject is None:
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now().strftime("%Y/%m/%d")
         subject = f"Alithia Digest {today}"
 
     msg["Subject"] = Header(subject, "utf-8").encode()
