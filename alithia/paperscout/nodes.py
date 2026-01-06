@@ -375,6 +375,11 @@ def communication_node(state: AgentState) -> dict:
                 if isinstance(state.email_content, str)
                 else state.email_content.html_content if state.email_content else ""
             ),
+            subject=(
+                state.email_content.subject
+                if hasattr(state.email_content, "subject") and state.email_content.subject
+                else None
+            ),
         )
 
         if success:
